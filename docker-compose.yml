@@ -6,11 +6,28 @@ services:
     container_name: sybase_audit
     ports:
       - "5000:5000"
-    # Sybase takes some time to start up.
-    # Default credentials for this image are usually Uid: sa, Pwd: password
-    # You can use the provided init_db.sql to set up the tables once it is running.
     healthcheck:
-      test: ["CMD", "/sybase/OCS-15_0/bin/isql", "-S", "SYBASE", "-U", "sa", "-P", "password", "-K", "SELECT 1"]
-      interval: 30s
+      # Sourcing SYBASE.sh is required to set LD_LIBRARY_PATH and other variables for isql.
+      # Default credentials for this image are sa / password.
+      test: ["CMD-SHELL", "source /sybase/SYBASE.sh && echo 'SELECT 1' | /sybase/OCS-15_0/bin/isql -S SYBASE -U sa -P password"]
+      interval: 15s
       timeout: 10s
-      retries: 5
+      retries: 20
+
+  sybase-setup:
+    image: ifnazar/sybase_15_7
+    container_name: sybase_setup
+    depends_on:
+      sybase:
+        condition: service_healthy
+    volumes:
+      - ./init_db.sql:/sybase/init_db.sql
+    # Sybase isql requires an entry in the 'interfaces' file to resolve the server name.
+    # We create a 'SYBASE_REMOTE' entry pointing to the 'sybase' service on port 5000.
+    command:
+      - bash
+      - -c
+      - |
+        source /sybase/SYBASE.sh
+        printf 'SYBASE_REMOTE\n\tquery tcp ether sybase 5000\n' >> /sybase/interfaces
+        /sybase/OCS-15_0/bin/isql -S SYBASE_REMOTE -U sa -P password -i /sybase/init_db.sql
