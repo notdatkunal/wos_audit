@@ -3,7 +3,7 @@
 PORT=8089
 
 # Kill any existing process on the specified port
-PID=$(lsof -t -i :$PORT)
+PID=$(netstat -tlnp 2>/dev/null | grep ":$PORT " | awk '{print $7}' | cut -d'/' -f1)
 if [ -z "$PID" ]; then
     echo "No process running on port $PORT"
 else
