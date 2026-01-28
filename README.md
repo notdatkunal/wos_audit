@@ -49,6 +49,38 @@ To run the tests for this application, you can use `pytest`. For more detailed i
 pytest
 ```
 
+## Database Setup (Sybase)
+
+This project uses Sybase ASE. For development, you can run Sybase in a Docker container.
+
+### Using Docker Compose
+
+1. Start the Sybase container:
+
+```bash
+docker-compose up -d
+```
+
+2. Wait for the container to be healthy. You can check the status with `docker-compose ps`.
+
+3. Initialize the database schema:
+
+```bash
+docker exec -i sybase_audit /sybase/OCS-15_0/bin/isql -S SYBASE -U sa -P password < init_db.sql
+```
+
+### Environment Variables
+
+Ensure your `.env` file is configured to match your Sybase instance:
+
+```env
+SYBASE_SERVER=localhost
+SYBASE_PORT=5000
+SYBASE_DB=master
+MAIN_DB_USER=sa
+MAIN_DB_PASS=password
+```
+
 ## Contributing
 
 If you would like to contribute to this project, please see [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
