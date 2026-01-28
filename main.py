@@ -13,7 +13,6 @@ app = FastAPI()
 #     database.Base.metadata.create_all(bind=database.engine)
 
 @app.get("/test")
-@app.get("/test2")
 async def test_endpoint():
     """
     Existing test endpoint.
