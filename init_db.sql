@@ -6,8 +6,14 @@
 CREATE TABLE [user] (
     id INT IDENTITY PRIMARY KEY,
     username VARCHAR(50) NOT NULL UNIQUE,
-    full_name VARCHAR(100)
+    full_name VARCHAR(100),
+    email VARCHAR(100) UNIQUE,
+    reset_token VARCHAR(100),
+    reset_token_expires DATETIME
 )
+GO
+
+CREATE INDEX idx_user_reset_token ON [user](reset_token)
 GO
 
 -- Create 'userrole' table
@@ -20,8 +26,8 @@ CREATE TABLE userrole (
 GO
 
 -- Insert sample users
-INSERT INTO [user] (username, full_name) VALUES ('jdoe', 'John Doe')
-INSERT INTO [user] (username, full_name) VALUES ('asmith', 'Alice Smith')
+INSERT INTO [user] (username, full_name, email) VALUES ('jdoe', 'John Doe', 'jdoe@example.com')
+INSERT INTO [user] (username, full_name, email) VALUES ('asmith', 'Alice Smith', 'asmith@example.com')
 GO
 
 -- Insert sample roles

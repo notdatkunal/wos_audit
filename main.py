@@ -1,3 +1,5 @@
+import secrets
+from datetime import datetime, timedelta, timezone
 from fastapi import FastAPI, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from sqlalchemy import text
@@ -66,3 +68,57 @@ def db_check(db: Session = Depends(database.get_db)):
         # For internal diagnostics, we might log the error,
         # but here we return it for the test/demo purpose
         return {"status": "error", "detail": str(e)}
+
+@app.post("/forgot-password")
+async def forgot_password(request: schemas.ForgotPasswordRequest, db: Session = Depends(database.get_db)):
+    """
+    Initiates the password reset process by generating a token.
+    Returns a generic message to prevent email enumeration.
+    """
+    user = db.query(models.User).filter(models.User.email == request.email).first()
+    if user:
+        # Generate token
+        token = secrets.token_urlsafe(32)
+        user.reset_token = token
+        # Using timezone-aware UTC datetime but storing as naive for DB compatibility if needed
+        user.reset_token_expires = datetime.now(timezone.utc).replace(tzinfo=None) + timedelta(hours=1)
+        db.commit()
+        # In a real application, we would send an email here.
+        # For simulation purposes, the token is generated and stored in the database.
+
+    return {"message": "If the email exists, a password reset instruction has been sent."}
+
+@app.post("/reset-password")
+async def reset_password(request: schemas.ResetPasswordRequest, db: Session = Depends(database.get_db)):
+    """
+    Resets the user's password using a valid token.
+    """
+    user = db.query(models.User).filter(models.User.reset_token == request.token).first()
+
+    if not user:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid token")
+
+    # Compare with naive UTC now
+    if user.reset_token_expires < datetime.now(timezone.utc).replace(tzinfo=None):
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Token expired")
+
+    # Reset password in Sybase using the 'main' user session
+    try:
+        # Sybase sp_password: old_password, new_password, login_name
+        # Since we are resetting, we use NULL for old_password (requires sa/admin privileges)
+        db.execute(text("EXEC sp_password NULL, :new_password, :username"),
+                   {"new_password": request.new_password, "username": user.username})
+        db.commit()
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to reset password in database: {str(e)}"
+        )
+
+    # Clear token
+    user.reset_token = None
+    user.reset_token_expires = None
+    db.commit()
+
+    return {"message": "Password reset successful"}
