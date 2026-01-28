@@ -27,6 +27,19 @@ class UserRole(UserRoleBase):
 class UserBase(BaseModel):
     username: str
     full_name: Optional[str] = None
+    email: Optional[str] = None
+
+class LinkEmailRequest(BaseModel):
+    username: str
+    password: str
+    email: str
+
+class ForgotPasswordRequest(BaseModel):
+    email: str
+
+class ResetPasswordRequest(BaseModel):
+    token: str
+    new_password: str
 
 class User(UserBase):
     id: int
