@@ -1,0 +1,16 @@
+version: '3.8'
+
+services:
+  sybase:
+    image: ifnazar/sybase_15_7
+    container_name: sybase_audit
+    ports:
+      - "5000:5000"
+    # Sybase takes some time to start up.
+    # Default credentials for this image are usually Uid: sa, Pwd: password
+    # You can use the provided init_db.sql to set up the tables once it is running.
+    healthcheck:
+      test: ["CMD", "/sybase/OCS-15_0/bin/isql", "-S", "SYBASE", "-U", "sa", "-P", "password", "-K", "SELECT 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
