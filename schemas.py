@@ -29,6 +29,11 @@ class UserBase(BaseModel):
     full_name: Optional[str] = None
     email: Optional[str] = None
 
+class LinkEmailRequest(BaseModel):
+    username: str
+    password: str
+    email: str
+
 class ForgotPasswordRequest(BaseModel):
     email: str
 
