@@ -5,7 +5,15 @@ import database, models, schemas
 
 app = FastAPI()
 
+# @app.on_event("startup")
+# def startup():
+#     """
+#     Creates the database tables on startup.
+#     """
+#     database.Base.metadata.create_all(bind=database.engine)
+
 @app.get("/test")
+@app.get("/test2")
 async def test_endpoint():
     """
     Existing test endpoint.
