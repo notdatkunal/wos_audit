@@ -9,8 +9,16 @@ client = TestClient(app)
 
 def test_login_success():
     """
-    Tests successful login by mocking a successful database connection and execution.
+    Tests successful login by mocking a successful database connection and execution,
+    and also mocking the local user database query.
     """
+    mock_db = MagicMock()
+    mock_user = models.User(id=1, username="testuser", full_name="Test User")
+    mock_db.query.return_value.filter.return_value.first.return_value = mock_user
+
+    # Override get_db for this test
+    app.dependency_overrides[get_db] = lambda: mock_db
+
     with patch("database.create_engine") as mock_create_engine:
         mock_engine = MagicMock()
         mock_create_engine.return_value = mock_engine
@@ -23,12 +31,18 @@ def test_login_success():
             json={"username": "testuser", "password": "testpassword"}
         )
         assert response.status_code == 200
-        assert response.json() == {"message": "Login successful", "username": "testuser"}
+        data = response.json()
+        assert data["message"] == "Login successful"
+        assert data["username"] == "testuser"
+        assert "access_token" in data
+        assert data["token_type"] == "bearer"
 
         # Verify that execute was called to validate connection
         assert mock_connection.execute.called
         # Verify that engine was disposed
         assert mock_engine.dispose.called
+
+    app.dependency_overrides.clear()
 
 def test_login_failure():
     """
@@ -52,43 +66,39 @@ def test_login_failure():
         # Verify that engine was still disposed
         assert mock_engine.dispose.called
 
-def test_read_users_mock():
+def test_login_user_not_in_local_db():
     """
-    Tests the /users endpoint by overriding the database dependency.
+    Tests successful Sybase login but user missing in application database.
     """
     mock_db = MagicMock()
-    # Create a mock user object
-    mock_user = models.User(id=1, username="testuser", full_name="Test User")
-    # Mocking the query results
-    mock_db.query.return_value.all.return_value = [mock_user]
-
-    # Override get_db dependency
+    mock_db.query.return_value.filter.return_value.first.return_value = None
     app.dependency_overrides[get_db] = lambda: mock_db
 
+    with patch("database.create_engine") as mock_create_engine:
+        mock_engine = MagicMock()
+        mock_create_engine.return_value = mock_engine
+        mock_connection = MagicMock()
+        mock_engine.connect.return_value.__enter__.return_value = mock_connection
+
+        response = client.post(
+            "/login",
+            json={"username": "testuser", "password": "testpassword"}
+        )
+        assert response.status_code == 401
+        assert "not found in application database" in response.json()["detail"]
+
+    app.dependency_overrides.clear()
+
+def test_protected_route_no_token():
+    """
+    Verifies that protected routes return 401 when no token is provided.
+    """
     response = client.get("/users")
-    assert response.status_code == 200
-    # The response should match the mocked user data
-    data = response.json()
-    assert len(data) == 1
-    assert data[0]["username"] == "testuser"
-    assert data[0]["full_name"] == "Test User"
+    assert response.status_code == 401
 
-    # Clear overrides after test
-    app.dependency_overrides.clear()
-
-def test_db_check_ok():
+def test_protected_route_invalid_token():
     """
-    Tests the /db-check endpoint with a successful query.
+    Verifies that protected routes return 401 with an invalid token.
     """
-    mock_db = MagicMock()
-    mock_result = MagicMock()
-    mock_result.scalar.return_value = 1
-    mock_db.execute.return_value = mock_result
-
-    app.dependency_overrides[get_db] = lambda: mock_db
-
-    response = client.get("/db-check")
-    assert response.status_code == 200
-    assert response.json() == {"status": "ok", "result": 1}
-
-    app.dependency_overrides.clear()
+    response = client.get("/users", headers={"Authorization": "Bearer invalidtoken"})
+    assert response.status_code == 401

@@ -6,3 +6,4 @@ sqlalchemy
 sqlalchemy-sybase
 pyodbc
 python-dotenv
+python-jose[cryptography]
