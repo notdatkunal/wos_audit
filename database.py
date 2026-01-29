@@ -42,6 +42,11 @@ def get_connection_url(username, password):
 _main_engine = None
 _SessionLocal = None
 
+_reset_engine = None
+_ResetSessionLocal = None
+
+SQLITE_URL = "sqlite:///./password_reset.db"
+
 def get_main_engine():
     global _main_engine
     if _main_engine is None:
@@ -55,7 +60,21 @@ def get_session_local():
         _SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
     return _SessionLocal
 
+def get_reset_engine():
+    global _reset_engine
+    if _reset_engine is None:
+        _reset_engine = create_engine(SQLITE_URL, connect_args={"check_same_thread": False})
+    return _reset_engine
+
+def get_reset_session_local():
+    global _ResetSessionLocal
+    if _ResetSessionLocal is None:
+        engine = get_reset_engine()
+        _ResetSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+    return _ResetSessionLocal
+
 Base = declarative_base()
+ResetBase = declarative_base()
 
 def get_user_engine(username, password):
     """
@@ -66,10 +85,21 @@ def get_user_engine(username, password):
 
 def get_db():
     """
-    Dependency to get the global DB session.
+    Dependency to get the global DB session (Sybase).
     """
     SessionLocal = get_session_local()
     db = SessionLocal()
+    try:
+        yield db
+    finally:
+        db.close()
+
+def get_reset_db():
+    """
+    Dependency to get the password reset DB session (SQLite).
+    """
+    ResetSessionLocal = get_reset_session_local()
+    db = ResetSessionLocal()
     try:
         yield db
     finally:

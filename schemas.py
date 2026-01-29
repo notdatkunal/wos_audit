@@ -1,5 +1,6 @@
 from pydantic import BaseModel, ConfigDict
 from typing import List, Optional
+from datetime import datetime
 
 class LoginRequest(BaseModel):
     """
@@ -36,9 +37,69 @@ class UserRole(UserRoleBase):
 class UserBase(BaseModel):
     username: str
     full_name: Optional[str] = None
+    email: Optional[str] = None
+
+class LinkEmailRequest(BaseModel):
+    username: str
+    password: str
+    email: str
+
+class ForgotPasswordRequest(BaseModel):
+    email: str
+
+class ResetPasswordRequest(BaseModel):
+    token: str
+    new_password: str
 
 class User(UserBase):
     id: int
     roles: List[UserRole] = []
 
+    model_config = ConfigDict(from_attributes=True)
+
+class WOSMasterBase(BaseModel):
+    WOSSerial: int
+    CustomerCode: str
+    WOSType: str
+    InitiatedBy: str
+    DateTimeInitiated: datetime
+    ConcurredBy: Optional[str] = None
+    DateTimeConcurred: Optional[datetime] = None
+    WONumber: Optional[str] = None
+    WOIDate: Optional[datetime] = None
+    ApprovedBy: Optional[str] = None
+    DateTimeApproved: Optional[datetime] = None
+    SanctionNo: Optional[str] = None
+    SanctionDate: Optional[datetime] = None
+    ClosedBy: Optional[str] = None
+    DateTimeClosed: Optional[datetime] = None
+    Remarks: Optional[str] = None
+
+class WOSMaster(WOSMasterBase):
+    model_config = ConfigDict(from_attributes=True)
+
+class WOSLineBase(BaseModel):
+    WOSSerial: int
+    WOSLineSerial: int
+    ItemCode: str
+    ItemDesc: str
+    ItemDeno: str
+    SOS: str
+    AuthorisedQty: float
+    ReceivedQty: Optional[float] = None
+    BalanceQty: Optional[float] = None
+    ReviewedQty: Optional[float] = None
+    VettedQty: Optional[float] = None
+    RecommendedQty: Optional[float] = None
+    DateFromWhichHeld: Optional[datetime] = None
+    AuthorityRef: str
+    AuthorityDate: datetime
+    Justification: str
+    Price: Optional[float] = None
+    TotalCost: Optional[float] = None
+    Remarks: Optional[str] = None
+    ClosedBy: Optional[str] = None
+    DateTimeClosed: Optional[datetime] = None
+
+class WOSLine(WOSLineBase):
     model_config = ConfigDict(from_attributes=True)

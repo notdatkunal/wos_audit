@@ -1,13 +1,17 @@
+import secrets
+from datetime import datetime, timedelta, timezone
 from fastapi import FastAPI, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from sqlalchemy import text
+
 import database, models, schemas, auth
+
 
 app = FastAPI()
 
 @app.get("/test")
-@app.get("/test2")
 async def test_endpoint(current_user: models.User = Depends(auth.get_current_user)):
+
     """
     Existing test endpoint, now protected.
     """
@@ -83,3 +87,109 @@ def db_check(
         return {"status": "ok", "result": result.scalar()}
     except Exception as e:
         return {"status": "error", "detail": str(e)}
+
+@app.post("/set-user-email")
+async def set_user_email(
+    request: schemas.LinkEmailRequest,
+    reset_db: Session = Depends(database.get_reset_db)
+):
+    """
+    Links a username (from Sybase) to an email address in SQLite.
+    Requires the user's current password for authentication.
+    """
+    # Authenticate user by attempting a connection to Sybase
+    engine = database.get_user_engine(request.username, request.password)
+    try:
+        with engine.connect() as connection:
+            connection.execute(text("SELECT 1"))
+    except Exception:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Authentication failed: Invalid credentials"
+        )
+    finally:
+        engine.dispose()
+
+    # Update or create the mapping in SQLite
+    mapping = reset_db.query(reset_models.UserEmail).filter(
+        reset_models.UserEmail.username == request.username
+    ).first()
+
+    if mapping:
+        mapping.email = request.email
+    else:
+        mapping = reset_models.UserEmail(username=request.username, email=request.email)
+        reset_db.add(mapping)
+
+    reset_db.commit()
+    return {"message": f"Email {request.email} linked to user {request.username}"}
+
+@app.post("/forgot-password")
+async def forgot_password(
+    request: schemas.ForgotPasswordRequest,
+    reset_db: Session = Depends(database.get_reset_db)
+):
+    """
+    Initiates the password reset process by generating a token.
+    Uses the SQLite mapping to find the username associated with the email.
+    Returns a generic message to prevent email enumeration.
+    """
+    # Find the username associated with this email in SQLite
+    mapping = reset_db.query(reset_models.UserEmail).filter(
+        reset_models.UserEmail.email == request.email
+    ).first()
+
+    if mapping:
+        # Generate token
+        token = secrets.token_urlsafe(32)
+        # Store in SQLite
+        reset_info = reset_models.PasswordReset(
+            username=mapping.username,
+            token=token,
+            expires_at=datetime.now(timezone.utc).replace(tzinfo=None) + timedelta(hours=1)
+        )
+        reset_db.add(reset_info)
+        reset_db.commit()
+        # In a real application, we would send an email with the token here.
+        # DEBUG: print(f"DEBUG: Reset token for {mapping.username}: {token}")
+
+    return {"message": "If the email exists, a password reset instruction has been sent."}
+
+@app.post("/reset-password")
+async def reset_password(
+    request: schemas.ResetPasswordRequest,
+    db: Session = Depends(database.get_db),
+    reset_db: Session = Depends(database.get_reset_db)
+):
+    """
+    Resets the user's password using a valid token from SQLite.
+    """
+    reset_info = reset_db.query(reset_models.PasswordReset).filter(
+        reset_models.PasswordReset.token == request.token
+    ).first()
+
+    if not reset_info:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid token")
+
+    if reset_info.expires_at < datetime.now(timezone.utc).replace(tzinfo=None):
+        reset_db.delete(reset_info)
+        reset_db.commit()
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Token expired")
+
+    # Reset password in Sybase
+    try:
+        db.execute(text("EXEC sp_password NULL, :new_password, :username"),
+                   {"new_password": request.new_password, "username": reset_info.username})
+        db.commit()
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to reset password in database: {str(e)}"
+        )
+
+    # Clear token from SQLite
+    reset_db.delete(reset_info)
+    reset_db.commit()
+
+    return {"message": "Password reset successful"}
