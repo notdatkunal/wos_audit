@@ -9,6 +9,11 @@ import database, models, schemas, auth, reset_models
 
 app = FastAPI()
 
+@app.on_event("startup")
+def startup_event():
+    # Create tables in Sybase if they do not exist
+    models.Base.metadata.create_all(bind=database.get_main_engine())
+
 @app.get("/test")
 async def test_endpoint(current_user: models.User = Depends(auth.get_current_user)):
 
