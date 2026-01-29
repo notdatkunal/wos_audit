@@ -3,6 +3,11 @@
 PORT=8089
 VENV_DIR="venv"
 
+# Check if .env file exists
+if [ ! -f ".env" ]; then
+    echo "Warning: .env file not found. Please create one based on the instructions in README.md"
+fi
+
 echo "Checking for existing process on port $PORT..."
 
 # Try to find PID (Works on Windows Git Bash and Linux)
@@ -31,7 +36,12 @@ fi
 # Create virtual environment if it doesn't exist
 if [ ! -d "$VENV_DIR" ]; then
     echo "Creating virtual environment in $VENV_DIR..."
-    python -m venv $VENV_DIR
+    # Use python3 if available, otherwise python
+    if command -v python3 >/dev/null 2>&1; then
+        python3 -m venv $VENV_DIR
+    else
+        python -m venv $VENV_DIR
+    fi
 fi
 
 # Determine the python executable path

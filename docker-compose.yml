@@ -31,3 +31,17 @@ services:
         source /sybase/SYBASE.sh
         printf 'SYBASE_REMOTE\n\tquery tcp ether sybase 5000\n' >> /sybase/interfaces
         /sybase/OCS-15_0/bin/isql -S SYBASE_REMOTE -U sa -P password -i /sybase/init_db.sql
+
+  app:
+    build: .
+    container_name: wos_audit_app
+    ports:
+      - "8089:8089"
+    depends_on:
+      sybase-setup:
+        condition: service_completed_successfully
+    env_file:
+      - .env
+    environment:
+      - SYBASE_SERVER=sybase
+      - TDS_VERSION=5.0

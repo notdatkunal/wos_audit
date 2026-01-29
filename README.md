@@ -49,36 +49,49 @@ To run the tests for this application, you can use `pytest`. For more detailed i
 pytest
 ```
 
-## Database Setup (Sybase)
+## Docker Setup (Full Stack)
 
-This project uses Sybase ASE. For development, you can run Sybase in a Docker container.
+The easiest way to run the entire stack (FastAPI app + Sybase database) is using Docker Compose.
 
-### Using Docker Compose
+1.  **Configure Environment**: Ensure your `.env` file exists with the necessary secrets.
+2.  **Start the stack**:
+    ```bash
+    docker compose up --build -d
+    ```
+3.  **Check logs**:
+    ```bash
+    docker compose logs -f app
+    ```
 
-1. Start the Sybase container:
+The application will be available at `http://localhost:8089`.
 
-```bash
-docker-compose up -d
-```
+## Database Setup (Sybase Only)
 
-2. Wait for the container to be healthy. You can check the status with `docker-compose ps`.
+If you prefer to run only the database in Docker and the app locally:
 
-3. Initialize the database schema:
-
-```bash
-docker exec -i sybase_audit /sybase/OCS-15_0/bin/isql -S SYBASE -U sa -P password < init_db.sql
-```
+1.  **Start the Sybase container**:
+    ```bash
+    docker compose up -d sybase sybase-setup
+    ```
+2.  **Wait for initialization**: The `sybase-setup` container will automatically run `init_db.sql`.
 
 ### Environment Variables
 
-Ensure your `.env` file is configured to match your Sybase instance:
+Ensure your `.env` file is configured to match your environment:
 
 ```env
 SYBASE_SERVER=localhost
 SYBASE_PORT=5000
-SYBASE_DB=master
+SYBASE_DB=auditdb
 MAIN_DB_USER=sa
 MAIN_DB_PASS=password
+SECRET_KEY=your_secret_key
+ALGORITHM=HS256
+ACCESS_TOKEN_EXPIRE_MINUTES=30
+
+# Optional: override DB driver and TDS version (useful for FreeTDS)
+# DB_DRIVER={Adaptive Server Enterprise}
+# TDS_VERSION=5.0
 ```
 
 ## Contributing

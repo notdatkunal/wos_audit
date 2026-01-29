@@ -26,14 +26,22 @@ def get_connection_url(username, password):
             return ""
         return "{" + str(val).replace("}", "}}") + "}"
 
+    driver = os.getenv("DB_DRIVER", "{Adaptive Server Enterprise}")
+
     odbc_connect = (
-        f"DRIVER={{Adaptive Server Enterprise}};"
+        f"DRIVER={driver};"
         f"Server={SYBASE_SERVER};"
         f"Port={SYBASE_PORT};"
         f"Database={SYBASE_DB};"
         f"Uid={escape_odbc_value(username)};"
         f"Pwd={escape_odbc_value(password)};"
     )
+
+    # Add optional TDS_Version if provided (useful for FreeTDS)
+    tds_version = os.getenv("TDS_VERSION")
+    if tds_version:
+        odbc_connect += f"TDS_Version={tds_version};"
+
     # URL encode the entire odbc_connect string for the SQLAlchemy URL
     encoded_params = urllib.parse.quote_plus(odbc_connect)
     return f"sybase+pyodbc:///?odbc_connect={encoded_params}"
