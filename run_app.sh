@@ -1,6 +1,7 @@
 #!/bin/bash
 
 PORT=8089
+VENV_DIR="venv"
 
 echo "Checking for existing process on port $PORT..."
 
@@ -27,14 +28,27 @@ else
     fi
 fi
 
+# Create virtual environment if it doesn't exist
+if [ ! -d "$VENV_DIR" ]; then
+    echo "Creating virtual environment in $VENV_DIR..."
+    python -m venv $VENV_DIR
+fi
+
+# Determine the python executable path
+if [[ "$OSTYPE" == "msys" || "$OSTYPE" == "cygwin" ]]; then
+    PYTHON_EXE="$VENV_DIR/Scripts/python"
+else
+    PYTHON_EXE="$VENV_DIR/bin/python"
+fi
+
 # Install dependencies
-echo "Installing dependencies..."
-pip install -r requirements.txt
+echo "Installing dependencies in virtual environment..."
+$PYTHON_EXE -m pip install -r requirements.txt
 
 # Start the app
-echo "Starting app on port $PORT..."
+echo "Starting app on port $PORT using virtual environment..."
 # Using python -m uvicorn is often more reliable than calling uvicorn directly if PATH is not set
-nohup python -m uvicorn main:app --host 0.0.0.0 --port $PORT > app.log 2>&1 &
+nohup $PYTHON_EXE -m uvicorn main:app --host 0.0.0.0 --port $PORT > app.log 2>&1 &
 
 echo "App starting in background. checking logs..."
 sleep 2
