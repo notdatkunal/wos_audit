@@ -5,3 +5,4 @@ __pycache__/
 app.log
 password_reset.db
 venv/
+.env
