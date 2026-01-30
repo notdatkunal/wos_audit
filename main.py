@@ -39,7 +39,7 @@ def seed_users(db: Session):
     depts = ["ADMIN", "LOG", "OPS", "TECH"]
     stations = ['K', 'U', 'B', 'V', 'D', 'P', 'A', 'G']
     # Role names must be in ALL CAPS
-    roles_pool = ["ADMIN", "MANAGER", "USER", "AUDITOR", "VIEWER"]
+    roles_pool = ["NLAO", "AUDITOR", ]
     
     sql_queries = []
     
