@@ -75,3 +75,65 @@ go
 
 alter table WOSLine partition 2
 go
+
+
+CREATE TABLE CodeTable (
+    ColumnName   CHAR(30)      NOT NULL,
+    CodeValue    CHAR(10)      NOT NULL,
+    Description  CHAR(30)      NULL
+)
+LOCK ALLPAGES
+ON 'default';
+
+
+CREATE TABLE Correspondence (
+    LineNo                 INT            NOT NULL,
+    TableName              CHAR(30)       NOT NULL,
+    PrimaryKeyValue        VARCHAR(120)   NOT NULL,
+    RoleName               CHAR(15)       NOT NULL,
+    CorrespondenceBy       CHAR(8)        NOT NULL,
+    CorrespondenceToRole   CHAR(15)       NOT NULL,
+    DateTimeCorrespondence SMALLDATETIME  NOT NULL,
+    CorrespondenceType     CHAR(5)        NOT NULL,
+    StationCode            CHAR(1)        NOT NULL,
+    Remarks                VARCHAR(255)   NULL,
+    DocumentType           CHAR(30)       NULL,
+    Document               IMAGE          NULL,
+    CorrespondenceChoice   CHAR(1)        NULL
+)
+LOCK ALLPAGES
+ON 'default';
+
+
+CREATE TABLE UserRole (
+    LoginId           CHAR(8)        NOT NULL,
+    RoleName          CHAR(15)       NOT NULL,
+    DateTimeActivated SMALLDATETIME  NOT NULL,
+    DateTimeClosed    SMALLDATETIME  NULL,
+    StationCode       CHAR(1)        NOT NULL,
+
+    CONSTRAINT chk_UserRol_Stn_cd
+    CHECK (StationCode IN ('K','U','B','V','D','P','A','G'))
+)
+LOCK ALLPAGES
+ON 'default';
+
+
+CREATE TABLE Users (
+    LoginId        CHAR(8)        NOT NULL,
+    Id             CHAR(8)        NOT NULL,
+    Name           CHAR(30)       NOT NULL,
+    Rank           CHAR(10)       NOT NULL,
+    Department     CHAR(8)        NOT NULL,
+    DateTimeJoined SMALLDATETIME  NOT NULL,
+    DateTimeLeft   SMALLDATETIME  NULL,
+    StationCode    CHAR(1)        NOT NULL,
+
+    CONSTRAINT chk_Users_Stn_cd
+    CHECK (StationCode IN ('K','U','B','V','D','P','A','G')),
+
+    CONSTRAINT Users_LoginId
+    CHECK (LoginId LIKE '[a-zA-Z]%')
+)
+LOCK ALLPAGES
+ON 'default';
