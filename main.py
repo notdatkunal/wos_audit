@@ -42,7 +42,7 @@ async def login(request: schemas.LoginRequest, db: Session = Depends(database.ge
             # A successful connection and execution implies valid credentials
 
             # Fetch user from local DB to include in token or just verify existence
-            user = db.query(models.User).filter(models.User.username == request.username).first()
+            user = db.query(models.User).filter(models.User.LoginId == request.username).first()
             if not user:
                 raise HTTPException(
                     status_code=status.HTTP_401_UNAUTHORIZED,
@@ -50,7 +50,7 @@ async def login(request: schemas.LoginRequest, db: Session = Depends(database.ge
                 )
 
             access_token = auth.create_access_token(
-                data={"sub": user.username, "roles": [r.role_name for r in user.roles]}
+                data={"sub": user.LoginId, "roles": [r.RoleName for r in user.roles]}
             )
             return {
                 "message": "Login successful",

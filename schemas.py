@@ -26,18 +26,25 @@ class TokenData(BaseModel):
     username: Optional[str] = None
 
 class UserRoleBase(BaseModel):
-    role_name: str
+    RoleName: str
+    DateTimeActivated: datetime
+    DateTimeClosed: Optional[datetime] = None
+    StationCode: str
 
 class UserRole(UserRoleBase):
-    id: int
-    user_id: int
+    LoginId: str
 
     model_config = ConfigDict(from_attributes=True)
 
 class UserBase(BaseModel):
-    username: str
-    full_name: Optional[str] = None
-    email: Optional[str] = None
+    LoginId: str
+    Id: str
+    Name: str
+    Rank: str
+    Department: str
+    DateTimeJoined: datetime
+    DateTimeLeft: Optional[datetime] = None
+    StationCode: str
 
 class LinkEmailRequest(BaseModel):
     username: str
@@ -52,7 +59,6 @@ class ResetPasswordRequest(BaseModel):
     new_password: str
 
 class User(UserBase):
-    id: int
     roles: List[UserRole] = []
 
     model_config = ConfigDict(from_attributes=True)
@@ -102,4 +108,29 @@ class WOSLineBase(BaseModel):
     DateTimeClosed: Optional[datetime] = None
 
 class WOSLine(WOSLineBase):
+    model_config = ConfigDict(from_attributes=True)
+
+class CodeTableBase(BaseModel):
+    ColumnName: str
+    CodeValue: str
+    Description: Optional[str] = None
+
+class CodeTable(CodeTableBase):
+    model_config = ConfigDict(from_attributes=True)
+
+class CorrespondenceBase(BaseModel):
+    LineNo: int
+    TableName: str
+    PrimaryKeyValue: str
+    RoleName: str
+    CorrespondenceBy: str
+    CorrespondenceToRole: str
+    DateTimeCorrespondence: datetime
+    CorrespondenceType: str
+    StationCode: str
+    Remarks: Optional[str] = None
+    DocumentType: Optional[str] = None
+    CorrespondenceChoice: Optional[str] = None
+
+class Correspondence(CorrespondenceBase):
     model_config = ConfigDict(from_attributes=True)

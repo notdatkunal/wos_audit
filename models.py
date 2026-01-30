@@ -1,29 +1,45 @@
-from sqlalchemy import Column, Integer, String, ForeignKey, DateTime, Float, Numeric, Text, CheckConstraint
+from sqlalchemy import Column, Integer, String, ForeignKey, DateTime, Float, Numeric, Text, CheckConstraint, LargeBinary
 from sqlalchemy.orm import relationship
 from database import Base
 
 class User(Base):
     """
-    SQLAlchemy model for the 'user' table.
+    SQLAlchemy model for the 'Users' table.
     """
-    __tablename__ = "user"
+    __tablename__ = "Users"
 
-    id = Column(Integer, primary_key=True, index=True)
-    username = Column(String(50), unique=True, index=True, nullable=False)
-    full_name = Column(String(100))
+    LoginId = Column(String(8), primary_key=True, nullable=False)
+    Id = Column(String(8), nullable=False)
+    Name = Column(String(30), nullable=False)
+    Rank = Column(String(10), nullable=False)
+    Department = Column(String(8), nullable=False)
+    DateTimeJoined = Column(DateTime, nullable=False)
+    DateTimeLeft = Column(DateTime)
+    StationCode = Column(String(1), nullable=False)
+
+    __table_args__ = (
+        CheckConstraint("StationCode IN ('K','U','B','V','D','P','A','G')", name="chk_Users_Stn_cd"),
+        CheckConstraint("LoginId LIKE '[a-zA-Z]%'", name="Users_LoginId"),
+    )
 
     # Relationship with UserRole
     roles = relationship("UserRole", back_populates="user")
 
 class UserRole(Base):
     """
-    SQLAlchemy model for the 'userrole' table.
+    SQLAlchemy model for the 'UserRole' table.
     """
-    __tablename__ = "userrole"
+    __tablename__ = "UserRole"
 
-    id = Column(Integer, primary_key=True, index=True)
-    user_id = Column(Integer, ForeignKey("user.id"), nullable=False)
-    role_name = Column(String(50), nullable=False)
+    LoginId = Column(String(8), ForeignKey("Users.LoginId"), primary_key=True, nullable=False)
+    RoleName = Column(String(15), primary_key=True, nullable=False)
+    DateTimeActivated = Column(DateTime, nullable=False)
+    DateTimeClosed = Column(DateTime)
+    StationCode = Column(String(1), primary_key=True, nullable=False)
+
+    __table_args__ = (
+        CheckConstraint("StationCode IN ('K','U','B','V','D','P','A','G')", name="chk_UserRol_Stn_cd"),
+    )
 
     # Relationship with User
     user = relationship("User", back_populates="roles")
@@ -76,11 +92,46 @@ class WOSLine(Base):
     AuthorityRef = Column(String(255), nullable=False)
     AuthorityDate = Column(DateTime, nullable=False)
     Justification = Column(String(255), nullable=False)
-    Price = Column(Numeric(19, 4), CheckConstraint('Price >= 0'))
-    TotalCost = Column(Numeric(19, 4), CheckConstraint('TotalCost >= 0'))
+    Price = Column(Numeric(19, 4))
+    TotalCost = Column(Numeric(19, 4))
     Remarks = Column(Text)
     ClosedBy = Column(String(8))
     DateTimeClosed = Column(DateTime)
 
+    __table_args__ = (
+        CheckConstraint('Price >= 0', name='Chk_Price'),
+        CheckConstraint('TotalCost >= 0', name='Chk_TotalCost'),
+    )
+
     # Relationship with WOSMaster
     master = relationship("WOSMaster", back_populates="lines")
+
+class CodeTable(Base):
+    """
+    SQLAlchemy model for the 'CodeTable' table.
+    """
+    __tablename__ = "CodeTable"
+
+    ColumnName = Column(String(30), primary_key=True, nullable=False)
+    CodeValue = Column(String(10), primary_key=True, nullable=False)
+    Description = Column(String(30))
+
+class Correspondence(Base):
+    """
+    SQLAlchemy model for the 'Correspondence' table.
+    """
+    __tablename__ = "Correspondence"
+
+    LineNo = Column(Integer, primary_key=True, nullable=False)
+    TableName = Column(String(30), primary_key=True, nullable=False)
+    PrimaryKeyValue = Column(String(120), primary_key=True, nullable=False)
+    RoleName = Column(String(15), nullable=False)
+    CorrespondenceBy = Column(String(8), nullable=False)
+    CorrespondenceToRole = Column(String(15), nullable=False)
+    DateTimeCorrespondence = Column(DateTime, nullable=False)
+    CorrespondenceType = Column(String(5), nullable=False)
+    StationCode = Column(String(1), nullable=False)
+    Remarks = Column(String(255))
+    DocumentType = Column(String(30))
+    Document = Column(LargeBinary)
+    CorrespondenceChoice = Column(String(1))
