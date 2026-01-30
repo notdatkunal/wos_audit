@@ -1,4 +1,6 @@
 import secrets
+import random
+import string
 from datetime import datetime, timedelta, timezone
 from fastapi import FastAPI, Depends, HTTPException, status
 from sqlalchemy.orm import Session
@@ -13,6 +15,88 @@ app = FastAPI()
 def startup_event():
     # Create tables in Sybase if they do not exist
     models.Base.metadata.create_all(bind=database.get_main_engine())
+
+    # Check length of the users table and seed if empty
+    SessionLocal = database.get_session_local()
+    db = SessionLocal()
+    try:
+        user_count = db.query(models.User).count()
+        if user_count == 0:
+            seed_users(db)
+    except Exception as e:
+        print(f"Error during startup seeding: {e}")
+    finally:
+        db.close()
+
+def seed_users(db: Session):
+    """
+    Seeds the database with 3 random users and their roles if the users table is empty.
+    Stores the insert queries into 'seed_users.sql'.
+    """
+    first_names = ["John", "Jane", "Robert", "Emily", "Michael", "Sarah", "David", "Linda"]
+    last_names = ["Smith", "Doe", "Johnson", "Williams", "Brown", "Jones", "Miller", "Davis"]
+    ranks = ["MAJOR", "CAPTAIN", "LT COL", "COLONEL"]
+    depts = ["ADMIN", "LOG", "OPS", "TECH"]
+    stations = ['K', 'U', 'B', 'V', 'D', 'P', 'A', 'G']
+    # Role names must be in ALL CAPS
+    roles_pool = ["ADMIN", "MANAGER", "USER", "AUDITOR", "VIEWER"]
+    
+    sql_queries = []
+    
+    for i in range(3):
+        # Generate random user data
+        login_id = f"user{i+1}"
+        user_id = f"ID{random.randint(1000, 9999)}"
+        name = f"{random.choice(first_names)} {random.choice(last_names)}"
+        rank = random.choice(ranks)
+        dept = random.choice(depts)
+        stn = random.choice(stations)
+        
+        joined_date = datetime.now() - timedelta(days=random.randint(100, 1000))
+        
+        new_user = models.User(
+            LoginId=login_id,
+            Id=user_id,
+            Name=name,
+            Rank=rank,
+            Department=dept,
+            DateTimeJoined=joined_date,
+            StationCode=stn
+        )
+        db.add(new_user)
+        
+        # Build SQL query string
+        sql_queries.append(
+            f"INSERT INTO Users (LoginId, Id, Name, Rank, Department, DateTimeJoined, StationCode) "
+            f"VALUES ('{login_id}', '{user_id}', '{name}', '{rank}', '{dept}', '{joined_date.strftime('%Y-%m-%d %H:%M:%S')}', '{stn}');"
+        )
+        
+        # Seed user roles (one-to-many)
+        num_roles = random.randint(1, 3)
+        assigned_roles = random.sample(roles_pool, num_roles)
+        
+        for role_name in assigned_roles:
+            activated_date = joined_date + timedelta(days=1)
+            new_role = models.UserRole(
+                LoginId=login_id,
+                RoleName=role_name,
+                DateTimeActivated=activated_date,
+                StationCode=stn
+            )
+            db.add(new_role)
+            
+            sql_queries.append(
+                f"INSERT INTO UserRole (LoginId, RoleName, DateTimeActivated, StationCode) "
+                f"VALUES ('{login_id}', '{role_name}', '{activated_date.strftime('%Y-%m-%d %H:%M:%S')}', '{stn}');"
+            )
+            
+    db.commit()
+    
+    # Store queries in seed_users.sql
+    with open("seed_users.sql", "w") as f:
+        f.write("\n".join(sql_queries))
+    
+    print(f"Successfully seeded 3 users and roles. Queries saved to seed_users.sql")
 
 @app.get("/test")
 # async def test_endpoint(current_user: models.User = Depends(auth.get_current_user)):
@@ -49,12 +133,14 @@ async def login(request: schemas.LoginRequest, db: Session = Depends(database.ge
                     detail="User authenticated with DB but not found in application database"
                 )
 
+            user_roles = [r.RoleName for r in user.roles]
             access_token = auth.create_access_token(
-                data={"sub": user.LoginId, "roles": [r.RoleName for r in user.roles]}
+                data={"sub": user.LoginId, "roles": user_roles}
             )
             return {
                 "message": "Login successful",
                 "username": request.username,
+                "roles": user_roles,
                 "access_token": access_token,
                 "token_type": "bearer"
             }
