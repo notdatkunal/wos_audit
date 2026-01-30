@@ -15,12 +15,17 @@ def startup_event():
     models.Base.metadata.create_all(bind=database.get_main_engine())
 
 @app.get("/test")
-async def test_endpoint(current_user: models.User = Depends(auth.get_current_user)):
-
+# async def test_endpoint(current_user: models.User = Depends(auth.get_current_user)):
+# async def test_endpoint(current_user: models.User ):
+def test_endpoint(db: Session = Depends(database.get_db)):
     """
-    Existing test endpoint, now protected.
+    Test endpoint to verify database connectivity.
     """
-    return {"message": "test successful", "user": current_user.username}
+    try:
+        result = db.execute(text("SELECT 1"))
+        return {"message": "test successful", "db_result": result.scalar()}
+    except Exception as e:
+        return {"message": "test failed", "error": str(e)}
 
 @app.post("/login", response_model=schemas.LoginResponse)
 async def login(request: schemas.LoginRequest, db: Session = Depends(database.get_db)):
@@ -68,7 +73,7 @@ async def login(request: schemas.LoginRequest, db: Session = Depends(database.ge
 @app.get("/users", response_model=list[schemas.User])
 def read_users(
     db: Session = Depends(database.get_db),
-    current_user: models.User = Depends(auth.get_current_user)
+    # current_user: models.User = Depends(auth.get_current_user)
 ):
     """
     Retrieves all users using the global 'main' user session.
@@ -80,7 +85,7 @@ def read_users(
 @app.get("/db-check")
 def db_check(
     db: Session = Depends(database.get_db),
-    current_user: models.User = Depends(auth.get_current_user)
+    # current_user: models.User = Depends(auth.get_current_user)
 ):
     """
     Checks the database connectivity using the global 'main' user session.
