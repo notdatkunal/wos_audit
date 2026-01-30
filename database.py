@@ -33,8 +33,8 @@ def get_connection_url(username, password):
         f"Server={SYBASE_SERVER};"
         f"Port={SYBASE_PORT};"
         f"Database={SYBASE_DB};"
-        f"Uid={escape_odbc_value(username)};"
-        f"Pwd={escape_odbc_value(password)};"
+        f"Uid={username};"
+        f"Pwd={password};"
     )
 
     # Add optional TDS_Version if provided (useful for FreeTDS)
