@@ -241,6 +241,32 @@ def db_check(
     except Exception as e:
         return {"status": "error", "detail": str(e)}
 
+@app.get("/wosmaster", response_model=list[schemas.WOSMaster])
+def get_wos_masters(
+    db: Session = Depends(database.get_db),
+    # current_user: models.User = Depends(auth.get_current_user)
+):
+    """
+    Returns all WOSMaster records.
+    Protected by JWT.
+    """
+    return db.query(models.WOSMaster).all()
+
+@app.get("/wosmaster/{serial_no}", response_model=schemas.WOSMaster)
+def get_wos_master(
+    serial_no: int, 
+    db: Session = Depends(database.get_db),
+    # current_user: models.User = Depends(auth.get_current_user)
+):
+    """
+    Returns a specific WOSMaster record by its serial number, including its lines.
+    Protected by JWT.
+    """
+    master = db.query(models.WOSMaster).filter(models.WOSMaster.WOSSerial == serial_no).first()
+    if not master:
+        raise HTTPException(status_code=404, detail="WOSMaster not found")
+    return master
+
 @app.get("/codetable", response_model=list[schemas.CodeTable])
 def get_codetable_data(column_name: str, db: Session = Depends(database.get_db)):
     """

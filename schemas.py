@@ -63,27 +63,6 @@ class User(UserBase):
 
     model_config = ConfigDict(from_attributes=True)
 
-class WOSMasterBase(BaseModel):
-    WOSSerial: int
-    CustomerCode: str
-    WOSType: str
-    InitiatedBy: str
-    DateTimeInitiated: datetime
-    ConcurredBy: Optional[str] = None
-    DateTimeConcurred: Optional[datetime] = None
-    WONumber: Optional[str] = None
-    WOIDate: Optional[datetime] = None
-    ApprovedBy: Optional[str] = None
-    DateTimeApproved: Optional[datetime] = None
-    SanctionNo: Optional[str] = None
-    SanctionDate: Optional[datetime] = None
-    ClosedBy: Optional[str] = None
-    DateTimeClosed: Optional[datetime] = None
-    Remarks: Optional[str] = None
-
-class WOSMaster(WOSMasterBase):
-    model_config = ConfigDict(from_attributes=True)
-
 class WOSLineBase(BaseModel):
     WOSSerial: int
     WOSLineSerial: int
@@ -108,6 +87,28 @@ class WOSLineBase(BaseModel):
     DateTimeClosed: Optional[datetime] = None
 
 class WOSLine(WOSLineBase):
+    model_config = ConfigDict(from_attributes=True)
+
+class WOSMasterBase(BaseModel):
+    WOSSerial: int
+    CustomerCode: str
+    WOSType: str
+    InitiatedBy: str
+    DateTimeInitiated: datetime
+    ConcurredBy: Optional[str] = None
+    DateTimeConcurred: Optional[datetime] = None
+    WONumber: Optional[str] = None
+    WOIDate: Optional[datetime] = None
+    ApprovedBy: Optional[str] = None
+    DateTimeApproved: Optional[datetime] = None
+    SanctionNo: Optional[str] = None
+    SanctionDate: Optional[datetime] = None
+    ClosedBy: Optional[str] = None
+    DateTimeClosed: Optional[datetime] = None
+    Remarks: Optional[str] = None
+
+class WOSMaster(WOSMasterBase):
+    lines: List[WOSLine] = []
     model_config = ConfigDict(from_attributes=True)
 
 class CodeTableBase(BaseModel):
