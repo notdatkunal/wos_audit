@@ -35,46 +35,46 @@ def sync_db_users(db: Session):
     """
     Ensures all users in the 'Users' table exist as Sybase database logins and users.
     Default password for new users is 'password'.
+    Executed outside of a transaction as sp_addlogin/sp_adduser require it.
     """
     try:
         users = db.query(models.User).all()
+        # Use a raw connection with autocommit for system stored procedures
+        engine = db.get_bind()
+        
         for user in users:
             username = user.LoginId
             
-            # Check if login exists in Sybase
-            # master..syslogins contains all server-wide logins
-            login_exists = db.execute(
-                text("SELECT name FROM master..syslogins WHERE name = :username"),
-                {"username": username}
-            ).fetchone()
-
-            if not login_exists:
-                print(f"Login {username} not found. Creating Sybase login...")
-                # sp_addlogin creates a server-wide login
-                db.execute(
-                    text(f"EXEC sp_addlogin :username, 'password', :dbname"),
-                    {"username": username, "dbname": database.SYBASE_DB}
-                )
-            
-            # Check if user exists in the current database
-            # sysusers contains users for the current database
-            user_exists = db.execute(
-                text("SELECT name FROM sysusers WHERE name = :username"),
-                {"username": username}
-            ).fetchone()
-
-            if not user_exists:
-                print(f"User {username} not found in database {database.SYBASE_DB}. Adding user...")
-                # sp_adduser adds the login as a user to the current database
-                db.execute(
-                    text("EXEC sp_adduser :username"),
+            with engine.connect().execution_options(isolation_level="AUTOCOMMIT") as conn:
+                # Check if login exists in Sybase
+                login_exists = conn.execute(
+                    text("SELECT name FROM master..syslogins WHERE name = :username"),
                     {"username": username}
-                )
-            
-            db.commit()
+                ).fetchone()
+
+                if not login_exists:
+                    print(f"Login {username} not found. Creating Sybase login...")
+                    # sp_addlogin creates a server-wide login
+                    conn.execute(
+                        text("EXEC sp_addlogin :username, 'password', :dbname"),
+                        {"username": username, "dbname": database.SYBASE_DB}
+                    )
+                
+                # Check if user exists in the current database
+                user_exists = conn.execute(
+                    text("SELECT name FROM sysusers WHERE name = :username"),
+                    {"username": username}
+                ).fetchone()
+
+                if not user_exists:
+                    print(f"User {username} not found in database {database.SYBASE_DB}. Adding user...")
+                    # sp_adduser adds the login as a user to the current database
+                    conn.execute(
+                        text("EXEC sp_adduser :username"),
+                        {"username": username}
+                    )
     except Exception as e:
         print(f"Critical error during Sybase user sync: {e}")
-        db.rollback()
 
 def seed_users(db: Session):
     """
