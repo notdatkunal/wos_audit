@@ -35,4 +35,4 @@ jobs:
           MAIN_DB_USER: dummy_user
           MAIN_DB_PASS: dummy_password
         run: |
-          python -m pytest
+          python -m pytest tests/
