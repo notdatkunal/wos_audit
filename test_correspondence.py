@@ -33,7 +33,7 @@ def test_get_correspondence(client, mock_db_dependency):
     mock_correspondence.DocumentType = "NOTE"
     mock_correspondence.CorrespondenceChoice = "Y"
     
-    mock_db_dependency.query.return_value.filter.return_value.all.return_value = [mock_correspondence]
+    mock_db_dependency.query.return_value.outerjoin.return_value.filter.return_value.all.return_value = [(mock_correspondence, "Forwarded")]
     
     response = client.get("/correspondence/24")
     
@@ -44,3 +44,6 @@ def test_get_correspondence(client, mock_db_dependency):
     assert data[0]["PrimaryKeyValue"] == "24"
     assert data[0]["TableName"] == "WOSMaster"
     assert data[0]["CorrespondenceType"] == "Fwded"
+    assert data[0]["CorrespondenceTypeDescription"] == "Forwarded"
+
+

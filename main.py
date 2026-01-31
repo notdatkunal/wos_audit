@@ -350,12 +350,31 @@ def get_correspondence(
     db: Session = Depends(database.get_db)
 ):
     """
-    Returns correspondence list for a given WOSSerial.
+    Returns correspondence list for a given WOSSerial with choice descriptions.
     """
-    return db.query(models.Correspondence).filter(
+    results = db.query(
+        models.Correspondence,
+        models.CodeTable.Description.label("CorrespondenceTypeDescription")
+    ).outerjoin(
+        models.CodeTable,
+        (models.CodeTable.ColumnName == "CorrespondenceType") &
+        (models.CodeTable.CodeValue == models.Correspondence.CorrespondenceType)
+    ).filter(
         models.Correspondence.TableName == "WOSMaster",
         models.Correspondence.PrimaryKeyValue == str(wos_serial)
     ).all()
+    
+    output = []
+    for correspondence, description in results:
+        # Convert model instance to dict and add the description
+        c_dict = {c.name: getattr(correspondence, c.name) for c in correspondence.__table__.columns}
+        c_dict["CorrespondenceTypeDescription"] = description
+        output.append(c_dict)
+
+
+        
+    return output
+
 
 
 @app.get("/codetable", response_model=list[schemas.CodeTable])

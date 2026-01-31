@@ -138,6 +138,8 @@ class CorrespondenceBase(BaseModel):
     Remarks: Optional[str] = None
     DocumentType: Optional[str] = None
     CorrespondenceChoice: Optional[str] = None
+    CorrespondenceTypeDescription: Optional[str] = None
+
 
 class Correspondence(CorrespondenceBase):
     model_config = ConfigDict(from_attributes=True)
