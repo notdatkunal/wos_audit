@@ -8,6 +8,7 @@ from sqlalchemy.orm import Session
 from sqlalchemy import text
 
 import database, models, schemas, auth, reset_models
+from models import VettedQtyValidationError
 
 
 app = FastAPI()
@@ -375,7 +376,11 @@ def update_wos_line(
         )
     
     line.VettedQty = line_update.VettedQty
-    db.commit()
+    try:
+        db.commit()
+    except VettedQtyValidationError as e:
+        db.rollback()
+        raise HTTPException(status_code=400, detail=str(e))
     db.refresh(line)
     return line
 
@@ -412,7 +417,11 @@ def bulk_update_wos_lines(
         line.VettedQty = line_update.VettedQty
         updated_lines.append(line)
     
-    db.commit()
+    try:
+        db.commit()
+    except VettedQtyValidationError as e:
+        db.rollback()
+        raise HTTPException(status_code=400, detail=str(e))
     for line in updated_lines:
         db.refresh(line)
     return updated_lines

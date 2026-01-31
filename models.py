@@ -1,6 +1,11 @@
-from sqlalchemy import Column, Integer, String, ForeignKey, DateTime, Float, Numeric, Text, CheckConstraint, LargeBinary
+from sqlalchemy import Column, Integer, String, ForeignKey, DateTime, Float, Numeric, Text, CheckConstraint, LargeBinary, event
 from sqlalchemy.orm import relationship
 from database import Base
+
+
+class VettedQtyValidationError(Exception):
+    """Raised when VettedQty exceeds AuthorisedQty."""
+    pass
 
 class User(Base):
     """
@@ -105,6 +110,22 @@ class WOSLine(Base):
 
     # Relationship with WOSMaster
     master = relationship("WOSMaster", back_populates="lines")
+
+
+def validate_vetted_qty(mapper, connection, target):
+    """
+    Validates that VettedQty does not exceed AuthorisedQty.
+    Called before INSERT and UPDATE operations on WOSLine.
+    """
+    if target.VettedQty is not None and target.VettedQty > target.AuthorisedQty:
+        raise VettedQtyValidationError(
+            f"VettedQty ({target.VettedQty}) cannot be greater than AuthorisedQty ({target.AuthorisedQty})"
+        )
+
+
+# Register event listeners for WOSLine
+event.listen(WOSLine, 'before_insert', validate_vetted_qty)
+event.listen(WOSLine, 'before_update', validate_vetted_qty)
 
 class CodeTable(Base):
     """
