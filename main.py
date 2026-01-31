@@ -344,6 +344,20 @@ def update_wos_line(
     db.refresh(line)
     return line
 
+@app.get("/correspondence/{wos_serial}", response_model=list[schemas.Correspondence])
+def get_correspondence(
+    wos_serial: int,
+    db: Session = Depends(database.get_db)
+):
+    """
+    Returns correspondence list for a given WOSSerial.
+    """
+    return db.query(models.Correspondence).filter(
+        models.Correspondence.TableName == "WOSMaster",
+        models.Correspondence.PrimaryKeyValue == str(wos_serial)
+    ).all()
+
+
 @app.get("/codetable", response_model=list[schemas.CodeTable])
 def get_codetable_data(column_name: str, db: Session = Depends(database.get_db)):
     """
