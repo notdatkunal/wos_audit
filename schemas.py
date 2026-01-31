@@ -15,6 +15,7 @@ class LoginResponse(BaseModel):
     """
     message: str
     username: str
+    name: str
     roles: List[str]
     access_token: str
     token_type: str

@@ -186,6 +186,7 @@ async def login(request: schemas.LoginRequest, db: Session = Depends(database.ge
             return {
                 "message": "Login successful",
                 "username": request.username,
+                "name": user.Name,
                 "roles": user_roles,
                 "access_token": access_token,
                 "token_type": "bearer"
