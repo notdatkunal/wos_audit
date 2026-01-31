@@ -99,8 +99,6 @@ def seed_users(db: Session):
     print(f"Successfully seeded 3 users and roles. Queries saved to seed_users.sql")
 
 @app.get("/test")
-# async def test_endpoint(current_user: models.User = Depends(auth.get_current_user)):
-# async def test_endpoint(current_user: models.User ):
 def test_endpoint(db: Session = Depends(database.get_db)):
     """
     Test endpoint to verify database connectivity.
@@ -156,10 +154,11 @@ async def login(request: schemas.LoginRequest, db: Session = Depends(database.ge
         # Dispose of the temporary engine to prevent resource leaks
         engine.dispose()
 
+
 @app.get("/users", response_model=list[schemas.User])
 def read_users(
     db: Session = Depends(database.get_db),
-    # current_user: models.User = Depends(auth.get_current_user)
+    current_user: models.User = Depends(auth.get_current_user)
 ):
     """
     Retrieves all users using the global 'main' user session.
@@ -170,8 +169,7 @@ def read_users(
 
 @app.get("/db-check")
 def db_check(
-    db: Session = Depends(database.get_db),
-    # current_user: models.User = Depends(auth.get_current_user)
+    db: Session = Depends(database.get_db)
 ):
     """
     Checks the database connectivity using the global 'main' user session.
