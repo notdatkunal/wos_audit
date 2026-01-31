@@ -244,14 +244,28 @@ def db_check(
 
 @app.get("/wosmaster", response_model=list[schemas.WOSMaster])
 def get_wos_masters(
+    customer_code: Optional[str] = None,
+    from_date: Optional[datetime] = None,
+    to_date: Optional[datetime] = None,
     db: Session = Depends(database.get_db),
     # current_user: models.User = Depends(auth.get_current_user)
 ):
     """
-    Returns all WOSMaster records without lines.
+    Returns all WOSMaster records without lines, with optional filters.
     Protected by JWT.
     """
-    return db.query(models.WOSMaster).all()
+    query = db.query(models.WOSMaster)
+    
+    if customer_code:
+        query = query.filter(models.WOSMaster.CustomerCode == customer_code)
+    
+    if from_date:
+        query = query.filter(models.WOSMaster.DateTimeInitiated >= from_date)
+    
+    if to_date:
+        query = query.filter(models.WOSMaster.DateTimeInitiated <= to_date)
+        
+    return query.all()
 
 @app.get("/wosmaster/{serial_no}", response_model=schemas.WOSMaster)
 def get_wos_master(
