@@ -357,6 +357,7 @@ def update_wos_line(
 ):
     """
     Updates VettedQty for a specific WOSLine record.
+    VettedQty cannot be greater than AuthorisedQty.
     """
     line = db.query(models.WOSLine).filter(
         models.WOSLine.WOSSerial == wos_serial,
@@ -365,6 +366,13 @@ def update_wos_line(
     
     if not line:
         raise HTTPException(status_code=404, detail="WOSLine not found")
+    
+    # Validate VettedQty does not exceed AuthorisedQty
+    if line_update.VettedQty is not None and line_update.VettedQty > line.AuthorisedQty:
+        raise HTTPException(
+            status_code=400,
+            detail=f"VettedQty ({line_update.VettedQty}) cannot be greater than AuthorisedQty ({line.AuthorisedQty})"
+        )
     
     line.VettedQty = line_update.VettedQty
     db.commit()
@@ -379,6 +387,7 @@ def bulk_update_wos_lines(
     """
     Bulk updates VettedQty for multiple WOSLine records.
     The WOSSerial and the list of line updates are provided in the request body.
+    VettedQty cannot be greater than AuthorisedQty for any line.
     """
     updated_lines = []
     for line_update in bulk_update.Lines:
@@ -391,6 +400,13 @@ def bulk_update_wos_lines(
             raise HTTPException(
                 status_code=404, 
                 detail=f"WOSLine with LineSerial {line_update.WOSLineSerial} not found for WosSerial {bulk_update.WOSSerial}"
+            )
+        
+        # Validate VettedQty does not exceed AuthorisedQty
+        if line_update.VettedQty is not None and line_update.VettedQty > line.AuthorisedQty:
+            raise HTTPException(
+                status_code=400,
+                detail=f"VettedQty ({line_update.VettedQty}) cannot be greater than AuthorisedQty ({line.AuthorisedQty}) for LineSerial {line_update.WOSLineSerial}"
             )
         
         line.VettedQty = line_update.VettedQty
