@@ -8,55 +8,6 @@ import models, reset_models
 
 client = TestClient(app)
 
-def test_set_user_email_success():
-    """
-    Tests /set-user-email with a valid user and password.
-    """
-    mock_reset_db = MagicMock()
-    mock_reset_db.query.return_value.filter.return_value.first.return_value = None
-
-    app.dependency_overrides[get_reset_db] = lambda: mock_reset_db
-
-    with patch("database.create_engine") as mock_create_engine:
-        mock_engine = MagicMock()
-        mock_create_engine.return_value = mock_engine
-        mock_connection = MagicMock()
-        mock_engine.connect.return_value.__enter__.return_value = mock_connection
-
-        response = client.post(
-            "/set-user-email",
-            json={"username": "testuser", "password": "testpassword", "email": "test@example.com"}
-        )
-
-        assert response.status_code == 200
-        assert response.json()["message"] == "Email test@example.com linked to user testuser"
-        assert mock_reset_db.add.called
-        assert mock_reset_db.commit.called
-
-    app.dependency_overrides.clear()
-
-def test_set_user_email_failure():
-    """
-    Tests /set-user-email with invalid password.
-    """
-    mock_reset_db = MagicMock()
-    app.dependency_overrides[get_reset_db] = lambda: mock_reset_db
-
-    with patch("database.create_engine") as mock_create_engine:
-        mock_engine = MagicMock()
-        mock_create_engine.return_value = mock_engine
-        mock_engine.connect.return_value.__enter__.side_effect = Exception("Auth failed")
-
-        response = client.post(
-            "/set-user-email",
-            json={"username": "testuser", "password": "wrongpassword", "email": "test@example.com"}
-        )
-
-        assert response.status_code == 401
-        assert "Authentication failed" in response.json()["detail"]
-
-    app.dependency_overrides.clear()
-
 def test_forgot_password_success():
     """
     Tests /forgot-password with a linked email.

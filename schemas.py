@@ -51,11 +51,6 @@ class UserBase(BaseModel):
     DateTimeLeft: Optional[datetime] = None
     StationCode: str
 
-class LinkEmailRequest(BaseModel):
-    username: str
-    password: str
-    email: str
-
 class ForgotPasswordRequest(BaseModel):
     email: str
 

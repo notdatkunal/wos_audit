@@ -1,6 +1,5 @@
 import secrets
 import random
-import string
 from datetime import datetime, timedelta, timezone
 from fastapi import FastAPI, Depends, HTTPException, status
 from fastapi.middleware.cors import CORSMiddleware
@@ -248,42 +247,6 @@ def get_codetable_data(column_name: str, db: Session = Depends(database.get_db))
     Returns all data from CodeTable for a given ColumnName.
     """
     return db.query(models.CodeTable).filter(models.CodeTable.ColumnName == column_name).all()
-
-@app.post("/set-user-email")
-async def set_user_email(
-    request: schemas.LinkEmailRequest,
-    reset_db: Session = Depends(database.get_reset_db)
-):
-    """
-    Links a username (from Sybase) to an email address in SQLite.
-    Requires the user's current password for authentication.
-    """
-    # Authenticate user by attempting a connection to Sybase
-    engine = database.get_user_engine(request.username, request.password)
-    try:
-        with engine.connect() as connection:
-            connection.execute(text("SELECT 1"))
-    except Exception:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Authentication failed: Invalid credentials"
-        )
-    finally:
-        engine.dispose()
-
-    # Update or create the mapping in SQLite
-    mapping = reset_db.query(reset_models.UserEmail).filter(
-        reset_models.UserEmail.username == request.username
-    ).first()
-
-    if mapping:
-        mapping.email = request.email
-    else:
-        mapping = reset_models.UserEmail(username=request.username, email=request.email)
-        reset_db.add(mapping)
-
-    reset_db.commit()
-    return {"message": f"Email {request.email} linked to user {request.username}"}
 
 @app.post("/forgot-password")
 async def forgot_password(
