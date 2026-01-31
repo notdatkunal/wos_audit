@@ -89,6 +89,9 @@ class WOSLineBase(BaseModel):
 class WOSLine(WOSLineBase):
     model_config = ConfigDict(from_attributes=True)
 
+class WOSLineUpdate(BaseModel):
+    VettedQty: float
+
 class WOSMasterBase(BaseModel):
     WOSSerial: int
     CustomerCode: str

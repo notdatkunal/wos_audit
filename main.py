@@ -321,6 +321,29 @@ def get_wos_line(
         raise HTTPException(status_code=404, detail="WOSLine not found")
     return line
 
+@app.put("/wosline/{wos_serial}/{line_serial}", response_model=schemas.WOSLine)
+def update_wos_line(
+    wos_serial: int,
+    line_serial: int,
+    line_update: schemas.WOSLineUpdate,
+    db: Session = Depends(database.get_db)
+):
+    """
+    Updates VettedQty for a specific WOSLine record.
+    """
+    line = db.query(models.WOSLine).filter(
+        models.WOSLine.WOSSerial == wos_serial,
+        models.WOSLine.WOSLineSerial == line_serial
+    ).first()
+    
+    if not line:
+        raise HTTPException(status_code=404, detail="WOSLine not found")
+    
+    line.VettedQty = line_update.VettedQty
+    db.commit()
+    db.refresh(line)
+    return line
+
 @app.get("/codetable", response_model=list[schemas.CodeTable])
 def get_codetable_data(column_name: str, db: Session = Depends(database.get_db)):
     """
