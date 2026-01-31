@@ -33,6 +33,25 @@ def test_get_correspondence(client, mock_db_dependency):
     mock_correspondence.DocumentType = "NOTE"
     mock_correspondence.CorrespondenceChoice = "Y"
     
+    # Mocking the __table__.columns for the dict conversion
+    fields = [
+        "LineNo", "TableName", "PrimaryKeyValue", "RoleName", "CorrespondenceBy",
+        "CorrespondenceToRole", "DateTimeCorrespondence", "CorrespondenceType",
+        "StationCode", "Remarks", "DocumentType", "CorrespondenceChoice"
+    ]
+    mock_columns = []
+    for field in fields:
+        col = MagicMock()
+        col.name = field
+        mock_columns.append(col)
+        if not hasattr(mock_correspondence, field):
+            setattr(mock_correspondence, field, None)
+    
+    # Use setattr because __table__ is a protected name in MagicMock
+    mock_table = MagicMock()
+    mock_table.columns = mock_columns
+    setattr(mock_correspondence, "__table__", mock_table)
+
     mock_db_dependency.query.return_value.outerjoin.return_value.filter.return_value.all.return_value = [(mock_correspondence, "Forwarded")]
     
     response = client.get("/correspondence/24")

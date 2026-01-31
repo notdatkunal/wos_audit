@@ -37,6 +37,9 @@ def test_update_wosline_vetted_qty(client, mock_db_dependency):
     mock_line.AuthorityRef = "REF001"
     mock_line.AuthorityDate = "2023-01-01T00:00:00"
     mock_line.Justification = "Justification"
+    mock_line.Remarks = None
+    mock_line.ClosedBy = None
+    mock_line.DateTimeClosed = None
 
     # Mock the query
     mock_query = mock_db_dependency.query.return_value
@@ -82,6 +85,9 @@ def test_bulk_update_woslines(client, mock_db_dependency):
     mock_line1.AuthorityRef = "REF001"
     mock_line1.AuthorityDate = "2023-01-01T00:00:00"
     mock_line1.Justification = "Justification 1"
+    mock_line1.Remarks = None
+    mock_line1.ClosedBy = None
+    mock_line1.DateTimeClosed = None
 
     mock_line2 = MagicMock()
     mock_line2.WOSSerial = wos_serial
@@ -95,6 +101,9 @@ def test_bulk_update_woslines(client, mock_db_dependency):
     mock_line2.AuthorityRef = "REF002"
     mock_line2.AuthorityDate = "2023-01-01T00:00:00"
     mock_line2.Justification = "Justification 2"
+    mock_line2.Remarks = None
+    mock_line2.ClosedBy = None
+    mock_line2.DateTimeClosed = None
 
     # Mock the query behavior
     mock_query = mock_db_dependency.query.return_value

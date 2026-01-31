@@ -11,7 +11,7 @@ def client():
     with TestClient(app) as c:
         yield c
 
-def test_forgot_password_success():
+def test_forgot_password_success(client):
     """
     Tests /forgot-password with a linked email.
     """
@@ -31,7 +31,7 @@ def test_forgot_password_success():
 
     app.dependency_overrides.clear()
 
-def test_forgot_password_email_not_linked():
+def test_forgot_password_email_not_linked(client):
     """
     Tests /forgot-password with an unlinked email should still return 200.
     """
@@ -48,7 +48,7 @@ def test_forgot_password_email_not_linked():
 
     app.dependency_overrides.clear()
 
-def test_reset_password_success():
+def test_reset_password_success(client):
     """
     Tests /reset-password with a valid token.
     """
@@ -77,7 +77,7 @@ def test_reset_password_success():
 
     app.dependency_overrides.clear()
 
-def test_reset_password_invalid_token():
+def test_reset_password_invalid_token(client):
     """
     Tests /reset-password with an invalid token.
     """
@@ -95,7 +95,7 @@ def test_reset_password_invalid_token():
 
     app.dependency_overrides.clear()
 
-def test_reset_password_expired_token():
+def test_reset_password_expired_token(client):
     """
     Tests /reset-password with an expired token.
     """

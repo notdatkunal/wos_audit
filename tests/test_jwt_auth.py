@@ -19,11 +19,19 @@ def mock_db_dependency():
     yield mock_db
     app.dependency_overrides.clear()
 
-def test_protected_route_with_valid_token(mock_db_dependency):
+def test_protected_route_with_valid_token(client, mock_db_dependency):
     """
     Tests that a protected route can be accessed with a valid JWT.
     """
-    mock_user = models.User(id=1, username="testuser", full_name="Test User")
+    mock_user = models.User(
+        LoginId="testuser",
+        Name="Test User",
+        Id="ID1234",
+        Rank="MAJOR",
+        Department="ADMIN",
+        DateTimeJoined=auth.datetime.now(),
+        StationCode="K"
+    )
     # Mock for get_current_user
     mock_db_dependency.query.return_value.filter.return_value.first.return_value = mock_user
     # Mock for read_users endpoint
@@ -39,9 +47,9 @@ def test_protected_route_with_valid_token(mock_db_dependency):
     assert response.status_code == 200
     data = response.json()
     assert len(data) == 1
-    assert data[0]["username"] == "testuser"
+    assert data[0]["LoginId"] == "testuser"
 
-def test_expired_token():
+def test_expired_token(client):
     """
     Tests that an expired token results in 401.
     """
@@ -54,7 +62,7 @@ def test_expired_token():
     assert response.status_code == 401
     assert response.json()["detail"] == "Could not validate credentials"
 
-def test_token_user_not_found(mock_db_dependency):
+def test_token_user_not_found(client, mock_db_dependency):
     """
     Tests that a valid token for a non-existent user results in 401.
     """
@@ -69,11 +77,19 @@ def test_token_user_not_found(mock_db_dependency):
     assert response.status_code == 401
     assert response.json()["detail"] == "Could not validate credentials"
 
-def test_db_check_with_valid_token(mock_db_dependency):
+def test_db_check_with_valid_token(client, mock_db_dependency):
     """
     Tests /db-check endpoint with a valid token.
     """
-    mock_user = models.User(id=1, username="testuser")
+    mock_user = models.User(
+        LoginId="testuser",
+        Name="Test User",
+        Id="ID1234",
+        Rank="MAJOR",
+        Department="ADMIN",
+        DateTimeJoined=auth.datetime.now(),
+        StationCode="K"
+    )
     mock_db_dependency.query.return_value.filter.return_value.first.return_value = mock_user
 
     mock_result = MagicMock()

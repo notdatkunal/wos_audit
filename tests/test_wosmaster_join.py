@@ -47,10 +47,10 @@ def test_get_wos_masters(client, mock_db_dependency):
         col = MagicMock()
         col.name = field
         mock_columns.append(col)
-        if not hasattr(mock_master, field):
-            setattr(mock_master, field, None)
-
-    mock_master.__table__.columns = mock_columns
+    # Use setattr because __table__ is a protected name in MagicMock
+    mock_table = MagicMock()
+    mock_table.columns = mock_columns
+    setattr(mock_master, "__table__", mock_table)
     
     mock_db_dependency.query.return_value.outerjoin.return_value.all.return_value = [(mock_master, "Type Description")]
     
@@ -84,10 +84,10 @@ def test_get_single_wos_master(client, mock_db_dependency):
         col = MagicMock()
         col.name = field
         mock_columns.append(col)
-        if not hasattr(mock_master, field):
-            setattr(mock_master, field, None)
-
-    mock_master.__table__.columns = mock_columns
+    # Use setattr because __table__ is a protected name in MagicMock
+    mock_table = MagicMock()
+    mock_table.columns = mock_columns
+    setattr(mock_master, "__table__", mock_table)
     
     mock_db_dependency.query.return_value.outerjoin.return_value.filter.return_value.first.return_value = (mock_master, "Type Description")
     

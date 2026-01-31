@@ -12,7 +12,7 @@ def client():
         yield c
 
 @patch("database.get_user_engine")
-def test_login_returns_name(mock_get_engine):
+def test_login_returns_name(client, mock_get_engine):
     # Mock engine and connection
     mock_engine = MagicMock()
     mock_conn = MagicMock()

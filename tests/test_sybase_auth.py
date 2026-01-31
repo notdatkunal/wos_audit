@@ -1,4 +1,5 @@
 import pytest
+from datetime import datetime
 from fastapi.testclient import TestClient
 from unittest.mock import patch, MagicMock
 from main import app
@@ -10,13 +11,21 @@ def client():
     with TestClient(app) as c:
         yield c
 
-def test_login_success():
+def test_login_success(client):
     """
     Tests successful login by mocking a successful database connection and execution,
     and also mocking the local user database query.
     """
     mock_db = MagicMock()
-    mock_user = models.User(id=1, username="testuser", full_name="Test User")
+    mock_user = models.User(
+        LoginId="testuser",
+        Name="Test User",
+        Id="ID1234",
+        Rank="MAJOR",
+        Department="ADMIN",
+        DateTimeJoined=datetime.now(),
+        StationCode="K"
+    )
     mock_db.query.return_value.filter.return_value.first.return_value = mock_user
 
     # Override get_db for this test
@@ -47,7 +56,7 @@ def test_login_success():
 
     app.dependency_overrides.clear()
 
-def test_login_failure():
+def test_login_failure(client):
     """
     Tests failed login by mocking a failed database connection.
     """
@@ -69,7 +78,7 @@ def test_login_failure():
         # Verify that engine was still disposed
         assert mock_engine.dispose.called
 
-def test_login_user_not_in_local_db():
+def test_login_user_not_in_local_db(client):
     """
     Tests successful Sybase login but user missing in application database.
     """
@@ -92,14 +101,14 @@ def test_login_user_not_in_local_db():
 
     app.dependency_overrides.clear()
 
-def test_protected_route_no_token():
+def test_protected_route_no_token(client):
     """
     Verifies that protected routes return 401 when no token is provided.
     """
     response = client.get("/users")
     assert response.status_code == 401
 
-def test_protected_route_invalid_token():
+def test_protected_route_invalid_token(client):
     """
     Verifies that protected routes return 401 with an invalid token.
     """

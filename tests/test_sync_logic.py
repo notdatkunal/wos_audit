@@ -2,6 +2,7 @@ import pytest
 from fastapi.testclient import TestClient
 from unittest.mock import patch, MagicMock
 from sqlalchemy import text
+from datetime import datetime
 from main import app, sync_db_users
 from database import get_db
 import models
@@ -24,7 +25,15 @@ def test_sync_db_users():
     mock_engine.connect.return_value.execution_options.return_value.__enter__.return_value = mock_conn
 
     # Mock Users table search result
-    mock_user = models.User(LoginId="user123")
+    mock_user = models.User(
+        LoginId="user123",
+        Name="Test User",
+        Id="ID1234",
+        Rank="MAJOR",
+        Department="ADMIN",
+        DateTimeJoined=datetime.now(),
+        StationCode="K"
+    )
     mock_db.query.return_value.all.return_value = [mock_user]
     
     # Mock Sybase login check
@@ -57,7 +66,16 @@ def test_login_api_integration():
     """
     mock_db = MagicMock()
     # Mock user in application database
-    mock_user = models.User(LoginId="testuser", roles=[])
+    mock_user = models.User(
+        LoginId="testuser",
+        Name="Test User",
+        Id="ID1234",
+        Rank="MAJOR",
+        Department="ADMIN",
+        DateTimeJoined=datetime.now(),
+        StationCode="K",
+        roles=[]
+    )
     mock_db.query.return_value.filter.return_value.first.return_value = mock_user
     
     app.dependency_overrides[get_db] = lambda: mock_db
