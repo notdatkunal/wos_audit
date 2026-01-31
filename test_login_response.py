@@ -6,7 +6,10 @@ from models import User, UserRole
 from unittest.mock import MagicMock, patch
 from sqlalchemy import text
 
-client = TestClient(app)
+@pytest.fixture
+def client():
+    with TestClient(app) as c:
+        yield c
 
 @patch("database.get_user_engine")
 def test_login_returns_name(mock_get_engine):

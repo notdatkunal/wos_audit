@@ -6,7 +6,10 @@ from main import app
 from database import get_db, get_reset_db
 import models, reset_models
 
-client = TestClient(app)
+@pytest.fixture
+def client():
+    with TestClient(app) as c:
+        yield c
 
 def test_forgot_password_success():
     """

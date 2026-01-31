@@ -28,6 +28,7 @@ jobs:
         # so a live Sybase instance is not required for this workflow.
         # Dummy environment variables are provided to satisfy the application initialization.
         env:
+          TESTING: "true"
           SYBASE_SERVER: localhost
           SYBASE_PORT: 5000
           SYBASE_DB: master

@@ -22,23 +22,32 @@ app.add_middleware(
 
 @app.on_event("startup")
 def startup_event():
-    # Create tables in Sybase if they do not exist
-    models.Base.metadata.create_all(bind=database.get_main_engine())
+    # Skip startup logic during tests to avoid database connection issues
+    import os
+    if os.getenv("TESTING") == "true":
+        print("Skipping startup synchronization (TESTING=true)")
+        return
 
-    # Check length of the users table and seed if empty
-    SessionLocal = database.get_session_local()
-    db = SessionLocal()
     try:
-        user_count = db.query(models.User).count()
-        if user_count == 0:
-            seed_users(db)
-        
-        # Ensure all usernames in Users table exist as db users
-        sync_db_users(db)
+        # Create tables in Sybase if they do not exist
+        models.Base.metadata.create_all(bind=database.get_main_engine())
+
+        # Check length of the users table and seed if empty
+        SessionLocal = database.get_session_local()
+        db = SessionLocal()
+        try:
+            user_count = db.query(models.User).count()
+            if user_count == 0:
+                seed_users(db)
+            
+            # Ensure all usernames in Users table exist as db users
+            sync_db_users(db)
+        except Exception as e:
+            print(f"Error during startup synchronization: {e}")
+        finally:
+            db.close()
     except Exception as e:
-        print(f"Error during startup synchronization: {e}")
-    finally:
-        db.close()
+        print(f"Critical error during startup: {e}")
 
 def sync_db_users(db: Session):
     """

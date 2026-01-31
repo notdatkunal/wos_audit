@@ -7,7 +7,10 @@ from unittest.mock import MagicMock
 from jose import jwt
 import os
 
-client = TestClient(app)
+@pytest.fixture
+def client():
+    with TestClient(app) as c:
+        yield c
 
 @pytest.fixture(autouse=True)
 def mock_db_dependency():
@@ -86,18 +89,14 @@ def test_db_check_with_valid_token(mock_db_dependency):
     assert response.status_code == 200
     assert response.json() == {"status": "ok", "result": 1}
 
-def test_test_endpoint_with_valid_token(mock_db_dependency):
+def test_test_endpoint_no_auth_required(client, mock_db_dependency):
     """
-    Tests /test endpoint with a valid token.
+    Tests /test endpoint which does not require authentication.
     """
-    mock_user = models.User(id=1, username="testuser")
-    mock_db_dependency.query.return_value.filter.return_value.first.return_value = mock_user
+    mock_result = MagicMock()
+    mock_result.scalar.return_value = 1
+    mock_db_dependency.execute.return_value = mock_result
 
-    token = auth.create_access_token(data={"sub": "testuser"})
-
-    response = client.get(
-        "/test",
-        headers={"Authorization": f"Bearer {token}"}
-    )
+    response = client.get("/test")
     assert response.status_code == 200
-    assert response.json() == {"message": "test successful", "user": "testuser"}
+    assert response.json() == {"message": "test successful", "db_result": 1}

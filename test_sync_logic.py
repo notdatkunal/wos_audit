@@ -6,20 +6,28 @@ from main import app, sync_db_users
 from database import get_db
 import models
 
-client = TestClient(app)
+@pytest.fixture
+def client():
+    with TestClient(app) as c:
+        yield c
 
 def test_sync_db_users():
     """
     Tests the sync_db_users function by mocking the database queries.
     """
     mock_db = MagicMock()
+    mock_engine = MagicMock()
+    mock_conn = MagicMock()
     
+    mock_db.get_bind.return_value = mock_engine
+    # Mocking engine.connect().execution_options(...).__enter__()
+    mock_engine.connect.return_value.execution_options.return_value.__enter__.return_value = mock_conn
+
     # Mock Users table search result
     mock_user = models.User(LoginId="user123")
     mock_db.query.return_value.all.return_value = [mock_user]
     
-    # Mock Sybase login check - first call for syslogins (not exists), second for sysusers (not exists)
-    # Using side_effect to return different values for different queries
+    # Mock Sybase login check
     def db_execute_mock(query, params=None):
         query_str = str(query)
         mock_result = MagicMock()
@@ -29,20 +37,19 @@ def test_sync_db_users():
             mock_result.fetchone.return_value = None # User does not exist
         return mock_result
 
-    mock_db.execute.side_effect = db_execute_mock
+    mock_conn.execute.side_effect = db_execute_mock
 
     # Run the sync function
     sync_db_users(mock_db)
 
-    # Verify that sp_addlogin and sp_adduser were called
-    calls = [call[0][0].text if hasattr(call[0][0], 'text') else str(call[0][0]) for call in mock_db.execute.call_args_list]
+    # Verify that sp_addlogin and sp_adduser were called on the connection
+    calls = [call[0][0].text if hasattr(call[0][0], 'text') else str(call[0][0]) for call in mock_conn.execute.call_args_list]
     
     addlogin_called = any("sp_addlogin" in c for c in calls)
     adduser_called = any("sp_adduser" in c for c in calls)
     
     assert addlogin_called, "sp_addlogin should have been called"
     assert adduser_called, "sp_adduser should have been called"
-    assert mock_db.commit.called
 
 def test_login_api_integration():
     """
