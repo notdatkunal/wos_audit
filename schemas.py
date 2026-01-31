@@ -109,6 +109,7 @@ class WOSMasterBase(BaseModel):
     ClosedBy: Optional[str] = None
     DateTimeClosed: Optional[datetime] = None
     Remarks: Optional[str] = None
+    WOSTypeDescription: Optional[str] = None
 
 class WOSMaster(WOSMasterBase):
     model_config = ConfigDict(from_attributes=True)

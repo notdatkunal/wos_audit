@@ -263,7 +263,14 @@ def get_wos_masters(
     Returns all WOSMaster records without lines, with optional filters.
     Protected by JWT.
     """
-    query = db.query(models.WOSMaster)
+    query = db.query(
+        models.WOSMaster,
+        models.CodeTable.Description.label("WOSTypeDescription")
+    ).outerjoin(
+        models.CodeTable,
+        (models.CodeTable.ColumnName == "WOSType") &
+        (models.CodeTable.CodeValue == models.WOSMaster.WOSType)
+    )
     
     if customer_code:
         query = query.filter(models.WOSMaster.CustomerCode == customer_code)
@@ -274,7 +281,15 @@ def get_wos_masters(
     if to_date:
         query = query.filter(models.WOSMaster.DateTimeInitiated <= to_date)
         
-    return query.all()
+    results = query.all()
+    
+    output = []
+    for master, description in results:
+        m_dict = {c.name: getattr(master, c.name) for c in master.__table__.columns}
+        m_dict["WOSTypeDescription"] = description
+        output.append(m_dict)
+        
+    return output
 
 @app.get("/wosmaster/{serial_no}", response_model=schemas.WOSMaster)
 def get_wos_master(
@@ -286,10 +301,22 @@ def get_wos_master(
     Returns a specific WOSMaster record by its serial number without lines.
     Protected by JWT.
     """
-    master = db.query(models.WOSMaster).filter(models.WOSMaster.WOSSerial == serial_no).first()
-    if not master:
+    result = db.query(
+        models.WOSMaster,
+        models.CodeTable.Description.label("WOSTypeDescription")
+    ).outerjoin(
+        models.CodeTable,
+        (models.CodeTable.ColumnName == "WOSType") &
+        (models.CodeTable.CodeValue == models.WOSMaster.WOSType)
+    ).filter(models.WOSMaster.WOSSerial == serial_no).first()
+
+    if not result:
         raise HTTPException(status_code=404, detail="WOSMaster not found")
-    return master
+    
+    master, description = result
+    m_dict = {c.name: getattr(master, c.name) for c in master.__table__.columns}
+    m_dict["WOSTypeDescription"] = description
+    return m_dict
 
 @app.get("/wosline", response_model=list[schemas.WOSLine])
 def get_wos_lines(
