@@ -148,11 +148,11 @@ def seed_users(db: Session):
             
     db.commit()
     
-    # Store queries in seed_users.sql
-    with open("seed_users.sql", "w") as f:
+    # Store queries in sql_scripts/seed_users.sql
+    with open("sql_scripts/seed_users.sql", "w") as f:
         f.write("\n".join(sql_queries))
     
-    print(f"Successfully seeded 3 users and roles. Queries saved to seed_users.sql")
+    print(f"Successfully seeded 3 users and roles. Queries saved to sql_scripts/seed_users.sql")
 
 @app.get("/test")
 def test_endpoint(db: Session = Depends(database.get_db)):

@@ -73,7 +73,7 @@ If you prefer to run only the database in Docker and the app locally:
     ```bash
     docker compose up -d sybase sybase-setup
     ```
-2.  **Wait for initialization**: The `sybase-setup` container will automatically run `init_db.sql`.
+2.  **Wait for initialization**: The `sybase-setup` container will automatically run `sql_scripts/init_db.sql`.
 
 ### Environment Variables
 
