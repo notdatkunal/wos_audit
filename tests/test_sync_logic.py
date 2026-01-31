@@ -60,7 +60,7 @@ def test_sync_db_users():
     assert addlogin_called, "sp_addlogin should have been called"
     assert adduser_called, "sp_adduser should have been called"
 
-def test_login_api_integration():
+def test_login_api_integration(client):
     """
     Tests the login API with the new synchronization logic implicitly (through mocking).
     """
