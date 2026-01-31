@@ -101,10 +101,10 @@ def test_bulk_update_woslines(client, mock_db_dependency):
     mock_line2.ClosedBy = None
     mock_line2.DateTimeClosed = None
 
-    # Mock the query behavior
+    # Mock the query behavior (service validates each line, then repo fetches again)
     mock_query = mock_db_dependency.query.return_value
     mock_filter = mock_query.filter.return_value
-    mock_filter.first.side_effect = [mock_line1, mock_line2]
+    mock_filter.first.side_effect = [mock_line1, mock_line2, mock_line1, mock_line2]
 
     # Request body
     bulk_data = {
