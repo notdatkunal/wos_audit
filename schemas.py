@@ -108,6 +108,9 @@ class WOSMasterBase(BaseModel):
     Remarks: Optional[str] = None
 
 class WOSMaster(WOSMasterBase):
+    model_config = ConfigDict(from_attributes=True)
+
+class WOSMasterWithLines(WOSMasterBase):
     lines: List[WOSLine] = []
     model_config = ConfigDict(from_attributes=True)
 

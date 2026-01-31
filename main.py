@@ -1,5 +1,6 @@
 import secrets
 import random
+from typing import Optional, List
 from datetime import datetime, timedelta, timezone
 from fastapi import FastAPI, Depends, HTTPException, status
 from fastapi.middleware.cors import CORSMiddleware
@@ -247,7 +248,7 @@ def get_wos_masters(
     # current_user: models.User = Depends(auth.get_current_user)
 ):
     """
-    Returns all WOSMaster records.
+    Returns all WOSMaster records without lines.
     Protected by JWT.
     """
     return db.query(models.WOSMaster).all()
@@ -259,13 +260,43 @@ def get_wos_master(
     # current_user: models.User = Depends(auth.get_current_user)
 ):
     """
-    Returns a specific WOSMaster record by its serial number, including its lines.
+    Returns a specific WOSMaster record by its serial number without lines.
     Protected by JWT.
     """
     master = db.query(models.WOSMaster).filter(models.WOSMaster.WOSSerial == serial_no).first()
     if not master:
         raise HTTPException(status_code=404, detail="WOSMaster not found")
     return master
+
+@app.get("/wosline", response_model=list[schemas.WOSLine])
+def get_wos_lines(
+    wos_serial: Optional[int] = None,
+    db: Session = Depends(database.get_db)
+):
+    """
+    Returns WOSLine records, optionally filtered by WOSSerial.
+    """
+    query = db.query(models.WOSLine)
+    if wos_serial is not None:
+        query = query.filter(models.WOSLine.WOSSerial == wos_serial)
+    return query.all()
+
+@app.get("/wosline/{wos_serial}/{line_serial}", response_model=schemas.WOSLine)
+def get_wos_line(
+    wos_serial: int,
+    line_serial: int,
+    db: Session = Depends(database.get_db)
+):
+    """
+    Returns a specific WOSLine record by its WOSSerial and WOSLineSerial.
+    """
+    line = db.query(models.WOSLine).filter(
+        models.WOSLine.WOSSerial == wos_serial,
+        models.WOSLine.WOSLineSerial == line_serial
+    ).first()
+    if not line:
+        raise HTTPException(status_code=404, detail="WOSLine not found")
+    return line
 
 @app.get("/codetable", response_model=list[schemas.CodeTable])
 def get_codetable_data(column_name: str, db: Session = Depends(database.get_db)):
