@@ -16,6 +16,9 @@ class LoginResponse(BaseModel):
     message: str
     username: str
     name: str
+    stationCode: str
+    rank: str
+    department: str
     roles: List[str]
     access_token: str
     token_type: str
