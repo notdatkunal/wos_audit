@@ -7,10 +7,7 @@ from main import app, sync_db_users
 from database import get_db
 import models
 
-@pytest.fixture
-def client():
-    with TestClient(app) as c:
-        yield c
+import datetime
 
 def test_sync_db_users():
     """

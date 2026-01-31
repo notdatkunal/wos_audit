@@ -7,10 +7,6 @@ from unittest.mock import MagicMock
 from jose import jwt
 import os
 
-@pytest.fixture
-def client():
-    with TestClient(app) as c:
-        yield c
 
 @pytest.fixture(autouse=True)
 def mock_db_dependency():

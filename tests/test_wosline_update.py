@@ -6,10 +6,6 @@ from unittest.mock import MagicMock
 import schemas
 import models
 
-@pytest.fixture
-def client():
-    with TestClient(app) as c:
-        yield c
 
 @pytest.fixture(autouse=True)
 def mock_db_dependency():

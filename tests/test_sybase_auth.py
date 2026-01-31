@@ -6,10 +6,7 @@ from main import app
 from database import get_db
 import models
 
-@pytest.fixture
-def client():
-    with TestClient(app) as c:
-        yield c
+import datetime
 
 def test_login_success(client):
     """
