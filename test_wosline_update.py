@@ -64,3 +64,57 @@ def test_update_wosline_not_found(client, mock_db_dependency):
 
     assert response.status_code == 404
     assert response.json()["detail"] == "WOSLine not found"
+
+def test_bulk_update_woslines(client, mock_db_dependency):
+    # Mock data
+    wos_serial = 101
+    
+    # Mocking line objects
+    mock_line1 = MagicMock()
+    mock_line1.WOSSerial = wos_serial
+    mock_line1.WOSLineSerial = 1
+    mock_line1.VettedQty = 10.0
+    mock_line1.ItemCode = "ITEM001"
+    mock_line1.ItemDesc = "Test Item 1"
+    mock_line1.ItemDeno = "EA"
+    mock_line1.SOS = "SOS"
+    mock_line1.AuthorisedQty = 100.0
+    mock_line1.AuthorityRef = "REF001"
+    mock_line1.AuthorityDate = "2023-01-01T00:00:00"
+    mock_line1.Justification = "Justification 1"
+
+    mock_line2 = MagicMock()
+    mock_line2.WOSSerial = wos_serial
+    mock_line2.WOSLineSerial = 2
+    mock_line2.VettedQty = 20.0
+    mock_line2.ItemCode = "ITEM002"
+    mock_line2.ItemDesc = "Test Item 2"
+    mock_line2.ItemDeno = "EA"
+    mock_line2.SOS = "SOS"
+    mock_line2.AuthorisedQty = 200.0
+    mock_line2.AuthorityRef = "REF002"
+    mock_line2.AuthorityDate = "2023-01-01T00:00:00"
+    mock_line2.Justification = "Justification 2"
+
+    # Mock the query behavior
+    mock_query = mock_db_dependency.query.return_value
+    mock_filter = mock_query.filter.return_value
+    mock_filter.first.side_effect = [mock_line1, mock_line2]
+
+    # Request body
+    bulk_data = {
+        "WOSSerial": wos_serial,
+        "Lines": [
+            {"WOSLineSerial": 1, "VettedQty": 55.0},
+            {"WOSLineSerial": 2, "VettedQty": 65.0}
+        ]
+    }
+
+    response = client.put("/wosline-bulk", json=bulk_data)
+
+    # Assertions
+    assert response.status_code == 200
+    assert mock_line1.VettedQty == 55.0
+    assert mock_line2.VettedQty == 65.0
+    assert mock_db_dependency.commit.called
+    assert mock_db_dependency.refresh.call_count == 2

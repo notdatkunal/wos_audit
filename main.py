@@ -371,6 +371,36 @@ def update_wos_line(
     db.refresh(line)
     return line
 
+@app.put("/wosline-bulk", response_model=List[schemas.WOSLine])
+def bulk_update_wos_lines(
+    bulk_update: schemas.WOSLinesBulkUpdate,
+    db: Session = Depends(database.get_db)
+):
+    """
+    Bulk updates VettedQty for multiple WOSLine records.
+    The WOSSerial and the list of line updates are provided in the request body.
+    """
+    updated_lines = []
+    for line_update in bulk_update.Lines:
+        line = db.query(models.WOSLine).filter(
+            models.WOSLine.WOSSerial == bulk_update.WOSSerial,
+            models.WOSLine.WOSLineSerial == line_update.WOSLineSerial
+        ).first()
+        
+        if not line:
+            raise HTTPException(
+                status_code=404, 
+                detail=f"WOSLine with LineSerial {line_update.WOSLineSerial} not found for WosSerial {bulk_update.WOSSerial}"
+            )
+        
+        line.VettedQty = line_update.VettedQty
+        updated_lines.append(line)
+    
+    db.commit()
+    for line in updated_lines:
+        db.refresh(line)
+    return updated_lines
+
 @app.get("/correspondence/{wos_serial}", response_model=list[schemas.Correspondence])
 def get_correspondence(
     wos_serial: int,

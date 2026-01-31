@@ -92,6 +92,14 @@ class WOSLine(WOSLineBase):
 class WOSLineUpdate(BaseModel):
     VettedQty: float
 
+class WOSLineUpdateSingle(BaseModel):
+    WOSLineSerial: int
+    VettedQty: float
+
+class WOSLinesBulkUpdate(BaseModel):
+    WOSSerial: int
+    Lines: List[WOSLineUpdateSingle]
+
 class WOSMasterBase(BaseModel):
     WOSSerial: int
     CustomerCode: str
