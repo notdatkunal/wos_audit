@@ -234,7 +234,6 @@ def db_check(
 ):
     """
     Checks the database connectivity using the global 'main' user session.
-    Protected by JWT.
     """
     try:
         # Simple query to verify connectivity
@@ -242,6 +241,13 @@ def db_check(
         return {"status": "ok", "result": result.scalar()}
     except Exception as e:
         return {"status": "error", "detail": str(e)}
+
+@app.get("/codetable", response_model=list[schemas.CodeTable])
+def get_codetable_data(column_name: str, db: Session = Depends(database.get_db)):
+    """
+    Returns all data from CodeTable for a given ColumnName.
+    """
+    return db.query(models.CodeTable).filter(models.CodeTable.ColumnName == column_name).all()
 
 @app.post("/set-user-email")
 async def set_user_email(
