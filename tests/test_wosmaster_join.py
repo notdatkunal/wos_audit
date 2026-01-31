@@ -18,7 +18,7 @@ def mock_db_dependency():
     app.dependency_overrides.clear()
 
 def test_get_wos_masters(client, mock_db_dependency):
-    # Setup mock data for WOSMaster
+    # Setup mock data for WOSMaster (optional string fields must be None or str for response validation)
     mock_master = MagicMock()
     mock_master.WOSSerial = 1
     mock_master.CustomerCode = "C001"
@@ -26,7 +26,17 @@ def test_get_wos_masters(client, mock_db_dependency):
     mock_master.InitiatedBy = "user1"
     mock_master.DateTimeInitiated = datetime(2026, 1, 31, 12, 0, 0)
     mock_master.Remarks = "Test Remark"
-    
+    mock_master.ConcurredBy = None
+    mock_master.DateTimeConcurred = None
+    mock_master.WONumber = None
+    mock_master.WOIDate = None
+    mock_master.ApprovedBy = None
+    mock_master.DateTimeApproved = None
+    mock_master.SanctionNo = None
+    mock_master.SanctionDate = None
+    mock_master.ClosedBy = None
+    mock_master.DateTimeClosed = None
+
     # Mocking the __table__.columns for the dict conversion
     col1 = MagicMock(); col1.name = "WOSSerial"; setattr(mock_master, "WOSSerial", 1)
     col2 = MagicMock(); col2.name = "CustomerCode"; setattr(mock_master, "CustomerCode", "C001")
@@ -64,7 +74,7 @@ def test_get_wos_masters(client, mock_db_dependency):
     assert data[0]["WOSTypeDescription"] == "Type Description"
 
 def test_get_single_wos_master(client, mock_db_dependency):
-    # Setup mock data for WOSMaster
+    # Setup mock data for WOSMaster (optional string fields must be None or str for response validation)
     mock_master = MagicMock()
     mock_master.WOSSerial = 1
     mock_master.CustomerCode = "C001"
@@ -72,7 +82,17 @@ def test_get_single_wos_master(client, mock_db_dependency):
     mock_master.InitiatedBy = "user1"
     mock_master.DateTimeInitiated = datetime(2026, 1, 31, 12, 0, 0)
     mock_master.Remarks = "Test Remark"
-    
+    mock_master.ConcurredBy = None
+    mock_master.DateTimeConcurred = None
+    mock_master.WONumber = None
+    mock_master.WOIDate = None
+    mock_master.ApprovedBy = None
+    mock_master.DateTimeApproved = None
+    mock_master.SanctionNo = None
+    mock_master.SanctionDate = None
+    mock_master.ClosedBy = None
+    mock_master.DateTimeClosed = None
+
     fields = [
         "WOSSerial", "CustomerCode", "WOSType", "InitiatedBy", "DateTimeInitiated",
         "ConcurredBy", "DateTimeConcurred", "WONumber", "WOIDate", "ApprovedBy",

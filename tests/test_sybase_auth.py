@@ -6,7 +6,6 @@ from main import app
 from database import get_db
 import models
 
-import datetime
 
 def test_login_success(client):
     """

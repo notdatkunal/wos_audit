@@ -7,7 +7,6 @@ from main import app, sync_db_users
 from database import get_db
 import models
 
-import datetime
 
 def test_sync_db_users():
     """

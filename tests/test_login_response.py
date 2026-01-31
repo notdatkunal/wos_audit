@@ -19,11 +19,14 @@ def test_login_returns_name(client):
         # Mock DB session
         mock_db = MagicMock()
         
-        # Mock user object
+        # Mock user object (string attributes required for LoginResponse validation)
         mock_user = MagicMock()
         mock_user.LoginId = "user1"
         mock_user.Name = "Sarah Brown"
-        
+        mock_user.StationCode = "K"
+        mock_user.Rank = "MAJOR"
+        mock_user.Department = "ADMIN"
+
         mock_role = MagicMock()
         mock_role.RoleName = "AUDITOR"
         mock_user.roles = [mock_role]
